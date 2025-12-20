@@ -1,0 +1,24 @@
+databases:
+  - name: quizzappdb
+    plan: free
+    databaseName: quizzapp
+    user: quizzapp
+
+services:
+  - type: web
+    name: quizz-app
+    plan: free
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "python -m gunicorn quizz_app.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quizzappdb
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
