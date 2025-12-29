@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Student Login{% endblock %}
+
+{% block content %}
+<h1>Student Login</h1>
+
+<form method="post" class="card form-grid">
+{% csrf_token %}
+<div>
+    <label>Username</label>
+    {{ form.username }}
+</div>
+
+<div>
+    <label>Password</label>
+    {{ form.password }}
+</div>
+
+{% if form.errors %}
+    <div class="msg error">{{ form.errors }}</div>
+{% endif %}
+
+<button class="btn" type="submit">Login</button>
+</form>
+
+<p style="margin-top:12px;">
+Don’t have an account?
+<a href="{% url 'student_signup' %}">Sign up</a>
+</p>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Student Signup{% endblock %}
+{% block content %}
+
+<h1>Student Signup</h1>
+
+<div class="card form-wrap">
+  <form method="post" autocomplete="off">
+    {% csrf_token %}
+
+    <div class="form-grid">
+
+      <div class="section-title">Personal Information</div>
+
+      <div class="field third">
+        <label>First Name</label>
+        {{ form.first_name }}
+      </div>
+      <div class="field third">
+        <label>Second Name</label>
+        {{ form.second_name }}
+      </div>
+      <div class="field third">
+        <label>Third Name</label>
+        {{ form.third_name }}
+      </div>
+
+      <div class="section-title">University Information</div>
+
+      <div class="field half">
+        <label>University ID</label>
+        {{ form.university_id }}
+      </div>
+      <div class="field half">
+        <label>Section</label>
+        {{ form.section }}
+      </div>
+
+      <div class="field half">
+        <label>City</label>
+        {{ form.city }}
+      </div>
+      <div class="field half">
+        <label>Major</label>
+        {{ form.major }}
+      </div>
+
+      <div class="section-title">Account Information</div>
+
+      <div class="field half">
+        <label>Username</label>
+        {{ form.username }}
+      </div>
+      <div class="field half">
+        <label>Email</label>
+        {{ form.email }}
+      </div>
+
+      <div class="field half">
+        <label>Password</label>
+        {{ form.password1 }}
+      </div>
+      <div class="field half">
+        <label>Confirm Password</label>
+        {{ form.password2 }}
+      </div>
+
+      <div class="field">
+        <button class="btn primary btn-full" type="submit">Create Student Account</button>
+      </div>
+
+    </div>
+  </form>
+</div>
+
+<p style="margin-top:14px;">
+  Already have an account? <a href="{% url 'student_login' %}">Login</a>
+</p>
+
+{% endblock %}

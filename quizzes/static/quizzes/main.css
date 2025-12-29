@@ -1,276 +1,336 @@
-/* ======================================================
-   RESET + BASE
-   ====================================================== */
-* {
-  box-sizing: border-box;
-}
+/* =========================
+   Quizfy - Clean Pro Dark UI
+   ========================= */
 
-html, body {
-  margin: 0;
-  padding: 0;
-}
+   :root{
+    --bg0:#070b14;
+    --bg1:#0b1220;
+    --panel: rgba(255,255,255,.04);
+    --panel2: rgba(255,255,255,.06);
+    --border: rgba(255,255,255,.10);
+    --text: rgba(255,255,255,.92);
+    --muted: rgba(255,255,255,.68);
+    --muted2: rgba(255,255,255,.52);
+    --primary:#3b82f6;
+    --primary2:#2563eb;
+    --danger:#ef4444;
+    --success:#22c55e;
+    --shadow: 0 14px 50px rgba(0,0,0,.45);
+    --radius: 16px;
+  }
+  
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(900px 600px at 20% 10%, rgba(59,130,246,.25) 0%, transparent 60%),
+      radial-gradient(900px 600px at 80% 0%, rgba(34,197,94,.16) 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
+  }
+  
+  /* layout */
+  .container{
+    width:min(1100px, 92vw);
+    margin: 26px auto 60px;
+  }
+  
+  /* =========================
+     NAVBAR (smaller + cleaner)
+     ========================= */
+  .topbar{
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10,16,30,.65);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .topbar .container{
+    margin:0 auto;
+    padding: 10px 0;           /* smaller height */
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 16px;
+  }
+  
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:800;
+    letter-spacing:.2px;
+  }
+  .brand-dot{
+    width:10px;height:10px;border-radius:50%;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
+    box-shadow: 0 0 0 4px rgba(59,130,246,.18);
+  }
+  
+  nav{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+  
+  nav a{
+    color: var(--muted);
+    text-decoration:none;
+    font-weight:600;
+    font-size: 14px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    transition: background .15s ease, color .15s ease;
+  }
+  nav a:hover{
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+  }
+  
+  .nav-welcome{
+    color: var(--muted);
+    font-weight:600;
+    font-size: 14px;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  
+  /* =========================
+     TYPOGRAPHY
+     ========================= */
+  h1{
+    font-size: clamp(28px, 3.4vw, 44px);
+    letter-spacing: -0.02em;
+    margin: 14px 0 14px;
+  }
+  h2{
+    margin: 18px 0 10px;
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 750;
+  }
+  p{ color: var(--muted); line-height: 1.5; }
+  
+  /* =========================
+     CARDS
+     ========================= */
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.03) 100%);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  
+  /* compact cards (for lists) */
+  .card.compact{
+    padding: 14px;
+    border-radius: 14px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.35);
+  }
+  
+  /* rows */
+  .row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+  }
+  
+  /* =========================
+     BUTTONS (real buttons)
+     ========================= */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.06);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 14px;
+    cursor:pointer;
+    text-decoration:none;
+    transition: transform .08s ease, filter .15s ease, background .15s ease;
+  }
+  .btn:hover{ background: rgba(255,255,255,.09); }
+  .btn:active{ transform: translateY(1px); }
+  
+  .btn.primary{
+    border: 0;
+    background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
+  }
+  .btn.primary:hover{ filter: brightness(1.06); }
+  
+  .btn.danger{
+    border: 0;
+    background: linear-gradient(180deg, #ff5a5a 0%, var(--danger) 100%);
+  }
+  .btn.danger:hover{ filter: brightness(1.06); }
+  
+  .actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top: 10px;
+  }
+  
+  /* =========================
+     FORMS (pro, not chunky)
+     ========================= */
+  form{ margin: 0; }
+  
+  .form-wrap{
+    max-width: 980px;
+    margin: 0 auto;
+  }
+  
+  .form-grid{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+  }
+  
+  .field{ grid-column: span 12; }
+  @media (min-width: 900px){
+    .field.third{ grid-column: span 4; }
+    .field.half{ grid-column: span 6; }
+  }
+  
+  .section-title{
+    grid-column: span 12;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    color: var(--muted);
+    font-weight: 800;
+    letter-spacing: .2px;
+  }
+  
+  label{
+    display:block;
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  
+  input, select, textarea{
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.05);
+    color: var(--text);
+    outline: none;
+    transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  
+  input::placeholder, textarea::placeholder{ color: var(--muted2); }
+  
+  input:focus, select:focus, textarea:focus{
+    border-color: rgba(59,130,246,.55);
+    box-shadow: 0 0 0 4px rgba(59,130,246,.18);
+    background: rgba(255,255,255,.07);
+  }
+  
+  /* checkbox/radio spacing */
+  input[type="checkbox"], input[type="radio"]{
+    width: auto;
+    padding: 0;
+    box-shadow: none;
+  }
+  
+  /* submit button full width inside forms (optional class) */
+  .btn-full{ width: 100%; }
+  
+  /* =========================
+     QUIZ REVIEW UI
+     ========================= */
+  .qbox{ padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .qtext{ font-weight: 750; color: var(--text); margin-bottom: 6px; }
+  .qimg{ max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.10); margin: 10px 0; }
+  .ok{ color: #43ff86; font-weight: 800; }
+  .bad{ color: #ff7b7b; font-weight: 800; }
+  
+  /* =========================
+     MESSAGES
+     ========================= */
+  .messages{ margin-top: 12px; }
+  .msg{
+    padding: 10px 12px;
+    border-radius: 12px;
+    margin: 8px 0;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.06);
+  }
+  .msg.error{ background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35); }
+  .msg.success{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.35); }
+  
+  /* =========================
+     CHROME AUTOFILL FIX
+     ========================= */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill{
+    -webkit-text-fill-color: rgba(255,255,255,.92) !important;
+    caret-color: rgba(255,255,255,.92) !important;
+    transition: background-color 999999s ease-in-out 0s;
+    -webkit-box-shadow: 0 0 0 1000px rgba(0,0,0,.35) inset !important;
+    box-shadow: 0 0 0 1000px rgba(0,0,0,.35) inset !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+  }
+  /* ================================
+   UNIFY ALL INPUT STATES (FINAL)
+================================ */
 
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #0b1220;
-  color: #e8eefc;
-  line-height: 1.6;
-}
-
-a {
-  color: #cfe1ff;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
-
-.container {
-  width: min(960px, 92%);
-  margin: 0 auto;
-  padding: 20px 0;
-}
-
-/* ======================================================
-   TOP BAR
-   ====================================================== */
-.topbar {
-  background: #121a2b;
-  border-bottom: 1px solid #26324a;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.topbar .container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.brand {
-  font-weight: 800;
-  letter-spacing: 0.5px;
-}
-
-nav a {
-  margin-left: 16px;
-  opacity: 0.9;
-}
-nav a:hover {
-  opacity: 1;
-}
-
-/* ======================================================
-   TYPOGRAPHY
-   ====================================================== */
-h1 {
-  font-size: 28px;
-  margin: 14px 0;
-}
-
-h2 {
-  font-size: 20px;
-  margin: 18px 0 10px;
-}
-
-h3 {
-  margin: 0 0 6px;
-}
-
-/* ======================================================
-   CARDS & LAYOUT
-   ====================================================== */
-.card {
-  background: #121a2b;
-  border: 1px solid #26324a;
-  border-radius: 16px;
-  padding: 16px;
-  margin: 14px 0;
-  box-shadow: 0 12px 28px rgba(0,0,0,.35);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-/* ======================================================
-   BUTTONS
-   ====================================================== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: #2b6bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 700;
-  transition: transform .08s ease, box-shadow .2s ease, opacity .2s;
-}
-
-.btn:hover {
-  box-shadow: 0 10px 24px rgba(43,107,255,.35);
-  opacity: .95;
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn.secondary {
-  background: #1c2740;
-}
-
-.btn.danger {
-  background: #ff3a3a;
-}
-
-/* ======================================================
-   DJANGO MESSAGES
-   ====================================================== */
-.messages {
-  margin-top: 12px;
-}
-
-.msg {
-  padding: 10px 12px;
-  border-radius: 12px;
-  margin: 8px 0;
-  background: #1b2440;
-  border: 1px solid #2a355a;
-  font-weight: 600;
-}
-
-.msg.error {
-  background: #3a1720;
-  border-color: rgba(255,58,58,.7);
-}
-
-.msg.success {
-  background: #133524;
-  border-color: rgba(77,255,136,.6);
-}
-
-/* ======================================================
-   FORMS (THIS FIXES UGLY DJANGO FORMS)
-   ====================================================== */
-form.card p {
-  margin-bottom: 14px;
-}
-
-label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #dfe8ff;
-}
-
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
+/* Base input look */
+input,
 select,
 textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #26324a;
-  background: #0b1220;
-  color: #e8eefc;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: #2b6bff;
-  box-shadow: 0 0 0 4px rgba(43,107,255,.25);
-}
-
-.helptext {
-  display: block;
-  font-size: 13px;
-  opacity: .8;
-  margin-top: 6px;
-}
-
-.errorlist {
-  list-style: none;
-  padding: 0;
-  margin: 6px 0 0;
-  color: #ffb4b4;
-  font-weight: 700;
-}
-
-/* ======================================================
-   QUIZ UI
-   ====================================================== */
-.qbox {
-  padding: 10px 0;
-}
-
-.qtext {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
-
-.qimg {
-  max-width: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.08),
+    rgba(255,255,255,0.03)
+  );
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.14);
   border-radius: 14px;
-  border: 1px solid #26324a;
-  margin: 10px 0;
 }
 
-/* Make quiz options clickable cards */
-.qbox label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid #26324a;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  background: rgba(255,255,255,.02);
+/* Focus (same for all) */
+input:focus,
+select:focus,
+textarea:focus {
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.10),
+    rgba(255,255,255,0.05)
+  );
+  border-color: rgba(59,130,246,0.65);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+  outline: none;
 }
 
-.qbox label:hover {
-  background: rgba(43,107,255,.08);
-}
-
-.qbox input[type="radio"] {
-  transform: scale(1.1);
-}
-
-/* ======================================================
-   RESULTS
-   ====================================================== */
-.ok {
-  color: #4dff88;
-  font-weight: 800;
-}
-
-.bad {
-  color: #ff7b7b;
-  font-weight: 800;
-}
-
-hr {
-  border: 0;
-  border-top: 1px solid #26324a;
-  margin: 16px 0;
+/* Autofill — force SAME look */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  box-shadow:
+    0 0 0px 1000px rgba(18,24,38,0.96) inset,
+    0 0 0 0 transparent !important;
+  -webkit-box-shadow:
+    0 0 0px 1000px rgba(18,24,38,0.96) inset !important;
+  border: 1px solid rgba(255,255,255,0.14);
+  transition: background-color 999999s ease-in-out 0s;
 }

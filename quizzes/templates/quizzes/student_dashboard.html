@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div>
+    <h1>Welcome, {{ profile.first_name }} ✅</h1>
+    <p>
+      <b>ID:</b> {{ profile.university_id }} |
+      <b>Section:</b> {{ profile.section }} |
+      <b>Major:</b> {{ profile.get_major_display }}
+    </p>
+  </div>
+  <a class="btn danger" href="{% url 'app_logout' %}">Logout</a>
+</div>
+
+<div class="card">
+  <h2>Enter Quiz Code</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.quiz_code }}
+    <button class="btn" type="submit">Start Quiz</button>
+  </form>
+</div>
+
+<h2 style="margin-top:18px;">My Quiz History</h2>
+
+{% if not submissions %}
+  <p>No submissions yet.</p>
+{% endif %}
+
+{% for s in submissions %}
+  <div class="card">
+    <h3>{{ s.quiz.title }}</h3>
+    <p>
+      <b>Score:</b> {{ s.score }} / {{ s.total }}
+      &nbsp; | &nbsp;
+      <b>Date:</b> {{ s.submitted_at|date:"Y-m-d H:i" }}
+    </p>
+
+    <div class="actions">
+      <a class="btn secondary" href="{% url 'student_submission_detail' s.id %}">
+        View Answers
+      </a>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

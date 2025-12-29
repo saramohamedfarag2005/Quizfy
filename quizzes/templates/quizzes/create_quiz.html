@@ -1,10 +1,26 @@
-{% extends "base.html"%}
+{% extends "base.html" %}
 {% block title %}Create Quiz{% endblock %}
+
 {% block content %}
 <h1>Create Quiz</h1>
-<form method="post" class="card">
-    {% csrf_token %}
-    {{form.as_p}}
-    <button class="btn" type="submit">Create</button>
+
+<form method="POST" class="card">
+  {% csrf_token %}
+
+  <div class="field">
+    <label>Quiz Title</label>
+    {{ form.title }}
+  </div>
+
+  <div class="field">
+    <label>Folder (optional)</label>
+    {{ form.folder }}
+    <small>You can leave this empty to keep the quiz ungrouped.</small>
+  </div>
+
+  <div class="actions">
+    <button class="btn" type="submit">Create Quiz</button>
+    <a class="btn secondary" href="{% url 'teacher_quizzes' %}">Cancel</a>
+  </div>
 </form>
 {% endblock %}

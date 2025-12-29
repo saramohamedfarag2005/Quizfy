@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}My Subjects{% endblock %}
+
+{% block content %}
+<div class="row">
+  <h1>My Subjects</h1>
+  <a class="btn" href="{% url 'create_folder' %}">+ Create Subject Folder</a>
+</div>
+
+{% if not folders %}
+  <p>No subject folders yet.</p>
+{% endif %}
+
+{% for f in folders %}
+  <div class="card">
+    <h3>{{ f.name }}</h3>
+    <p><b>Quizzes:</b> {{ f.quizzes.count }}</p>
+
+    <div class="actions">
+      <a class="btn secondary" href="{% url 'folder_detail' f.id %}">Open</a>
+      <a class="btn secondary" href="{% url 'export_folder_submissions_excel' f.id %}">Export Excel</a>
+    </div>
+  </div>
+{% endfor %}
+
+<hr>
+
+<h2>Ungrouped Quizzes</h2>
+
+{% if not ungrouped %}
+  <p>All quizzes are grouped ✅</p>
+{% endif %}
+
+{% for q in ungrouped %}
+  <div class="card">
+    <h3>{{ q.title }}</h3>
+    <p><b>Code:</b> {{ q.code }}</p>
+
+    <div class="actions">
+      <a class="btn secondary" href="{% url 'create_question' q.id %}">Add Question</a>
+      <a class="btn secondary" href="{% url 'quiz_submissions' q.id %}">Submissions</a>
+      <a class="btn secondary" href="{% url 'move_quiz' q.id %}">Move</a>
+      <a class="btn danger" href="{% url 'delete_quiz' q.id %}">Delete</a>
+    </div>
+  </div>
+{% endfor %}
+
+<!-- ✅ Teacher Help Bot Widget (place ONCE, outside loops) -->
+<div id="helpbot" class="helpbot">
+  <div class="helpbot-header">
+    <div class="helpbot-title">Teacher Help</div>
+    <button id="helpbot-toggle" class="helpbot-toggle" type="button">–</button>
+  </div>
+
+  <div id="helpbot-body" class="helpbot-body">
+    <div class="helpbot-msg bot">
+      Hi 👋 Ask me anything about using the dashboard (folders, moving quizzes, Excel export).
+    </div>
+  </div>
+
+  <form id="helpbot-form" class="helpbot-form">
+    {% csrf_token %}
+    <input id="helpbot-input" class="helpbot-input" type="text"
+           placeholder="Ask a question..." autocomplete="off" />
+    <button class="helpbot-send" type="submit">Send</button>
+  </form>
+</div>
+
+<style>
+  .helpbot{ position:fixed; right:22px; bottom:22px; width:340px; border-radius:16px; overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,0,0,.25); background:#0f172a; color:#e5e7eb; z-index:9999; }
+  .helpbot-header{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; background:#111827; }
+  .helpbot-title{ font-weight:700; font-size:14px; }
+  .helpbot-toggle{ border:0; background:transparent; color:#e5e7eb; font-size:18px; cursor:pointer; }
+  .helpbot-body{ padding:12px; height:260px; overflow:auto; background:#0f172a; }
+  .helpbot-msg{ padding:10px 10px; border-radius:12px; margin-bottom:10px; font-size:13px; line-height:1.35; white-space:pre-wrap; }
+  .helpbot-msg.user{ background:#1f2937; margin-left:40px; }
+  .helpbot-msg.bot{ background:#111827; margin-right:40px; border:1px solid rgba(255,255,255,.06); }
+  .helpbot-form{ display:flex; gap:8px; padding:12px; background:#111827; }
+  .helpbot-input{ flex:1; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.10);
+    background:#0b1220; color:#e5e7eb; outline:none; }
+  .helpbot-send{ padding:10px 12px; border-radius:12px; border:0; cursor:pointer; background:#2563eb; color:white; font-weight:600; }
+  .helpbot.collapsed .helpbot-body, .helpbot.collapsed .helpbot-form{ display:none; }
+</style>
+
+<script>
+  (function(){
+    const bot = document.getElementById("helpbot");
+    const toggle = document.getElementById("helpbot-toggle");
+    const body = document.getElementById("helpbot-body");
+    const form = document.getElementById("helpbot-form");
+    const input = document.getElementById("helpbot-input");
+
+    toggle.addEventListener("click", () => {
+      bot.classList.toggle("collapsed");
+      toggle.textContent = bot.classList.contains("collapsed") ? "+" : "–";
+    });
+
+    function addMsg(text, who){
+      const div = document.createElement("div");
+      div.className = "helpbot-msg " + who;
+      div.textContent = text;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function getCSRFToken(){
+      const tokenInput = form.querySelector("input[name='csrfmiddlewaretoken']");
+      return tokenInput ? tokenInput.value : "";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = input.value.trim();
+      if(!msg) return;
+
+      addMsg(msg, "user");
+      input.value = "";
+      input.disabled = true;
+
+      try{
+        const res = await fetch("{% url 'teacher_help_bot' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify({ message: msg })
+        });
+
+        const data = await res.json();
+        addMsg(data.reply || "Sorry — I didn’t understand. Try asking differently.", "bot");
+      } catch(err){
+        addMsg("Server error. Please try again.", "bot");
+      } finally {
+        input.disabled = false;
+        input.focus();
+      }
+    });
+  })();
+</script>
+
+{% endblock %}

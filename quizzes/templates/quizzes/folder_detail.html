@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ folder.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <h1>{{ folder.name }}</h1>
+
+  <div class="actions">
+    <a class="btn" href="{% url 'create_quiz' %}?folder={{ folder.id }}">
+      + Create Quiz in This Folder
+    </a>
+    <a class="btn secondary" href="{% url 'export_folder_submissions_excel' folder.id %}">
+      Export Excel
+    </a>
+  </div>
+</div>
+
+{% if not quizzes %}
+  <p>No quizzes in this folder yet.</p>
+{% endif %}
+
+{% for q in quizzes %}
+  <div class="card">
+    <h3>{{ q.title }}</h3>
+    <p><b>Code:</b> {{ q.code }}</p>
+
+    <div class="actions">
+      <a class="btn secondary" href="{% url 'create_question' q.id %}">Add Question</a>
+      <a class="btn secondary" href="{% url 'quiz_submissions' q.id %}">Submissions</a>
+      <a class="btn secondary" href="{% url 'move_quiz' q.id %}">Move</a>
+      <a class="btn danger" href="{% url 'delete_quiz' q.id %}">Delete</a>
+    </div>
+  </div>
+{% endfor %}
+
+<a class="btn secondary" href="{% url 'teacher_quizzes' %}">← Back to Subjects</a>
+{% endblock %}

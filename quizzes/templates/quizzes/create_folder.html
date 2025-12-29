@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Create Subject Folder{% endblock %}
+{% block content %}
+  <h1>Create Subject Folder</h1>
+  <form method="post" class="card">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn" type="submit">Create</button>
+  </form>
+{% endblock %}

@@ -87,3 +87,4 @@ LOGIN_REDIRECT_URL = "/teacher/quizzes/"
 LOGOUT_REDIRECT_URL = "/teacher/login/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Move Quiz{% endblock %}
+
+{% block content %}
+<h1>Move Quiz</h1>
+
+<div class="card">
+  <p><b>Quiz:</b> {{ quiz.title }}</p>
+
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <div class="actions">
+      <button class="btn" type="submit">Move</button>
+      <a class="btn secondary" href="{% url 'teacher_quizzes' %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

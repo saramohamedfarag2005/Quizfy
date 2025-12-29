@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="card" style="padding: 28px;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;">Quiz Platform</h1>
+      <p style="margin:10px 0 0; opacity:.9;">
+        Create quizzes, organize by subject folders, and export submissions to Excel.
+      </p>
+    </div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn secondary" href="{% url 'teacher_login' %}">Teacher Login</a>
+      <a class="btn" href="{% url 'student_login' %}">Student Login</a>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:16px; margin-top:16px;">
+
+  <!-- Student Card -->
+  <div class="card" style="padding:22px;">
+    <h2 style="margin-top:0;">Students</h2>
+    <p style="opacity:.9;">
+      Login to access quizzes using the quiz code. Your full name, ID, and section are saved automatically.
+    </p>
+    <div class="actions" style="margin-top:14px;">
+      <a class="btn" href="{% url 'student_login' %}">Login</a>
+      <a class="btn secondary" href="{% url 'student_signup' %}">Create Account</a>
+    </div>
+    <p style="margin-top:14px; font-size:13px; opacity:.8;">
+      You must be logged in to solve quizzes ✅
+    </p>
+  </div>
+
+  <!-- Teacher Card -->
+  <div class="card" style="padding:22px;">
+    <h2 style="margin-top:0;">Teachers</h2>
+    <p style="opacity:.9;">
+      Create subject folders (e.g., Math / Physics), move quizzes into folders, and export all submissions to Excel.
+    </p>
+    <div class="actions" style="margin-top:14px;">
+      <a class="btn secondary" href="{% url 'teacher_login' %}">Login</a>
+      <a class="btn" href="{% url 'teacher_signup' %}">Create Teacher Account</a>
+    </div>
+    <p style="margin-top:14px; font-size:13px; opacity:.8;">
+      Export includes: student full name + university ID + section + grades ✅
+    </p>
+  </div>
+
+</div>
+
+<div class="card" style="margin-top:16px; padding:18px;">
+  <h3 style="margin-top:0;">Quick Start</h3>
+  <ol style="margin:0; padding-left:18px; opacity:.9;">
+    <li>Students create an account and login.</li>
+    <li>Teacher creates a quiz and shares the quiz code.</li>
+    <li>Teacher groups quizzes into subject folders and exports submissions.</li>
+  </ol>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load quiz_extras %}
+
+{% block title %}Submission Details{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div>
+      <h1>Submission Details</h1>
+      <p><b>Quiz:</b> {{ quiz.title }} ({{ quiz.code }})</p>
+      <p><b>Score:</b> {{ submission.score }} / {{ submission.total }}</p>
+      <p><b>Submitted:</b> {{ submission.submitted_at|date:"Y-m-d H:i" }}</p>
+    </div>
+
+    <a class="btn secondary" href="{% url 'student_dashboard' %}">
+      ⬅ Back to Dashboard
+    </a>
+  </div>
+
+  <hr>
+
+  <h2>Review</h2>
+
+  {% for a in answers %}
+    <div class="qbox">
+      <div class="qtext">
+        <b>Q{{ forloop.counter }}.</b> {{ a.question.text }}
+      </div>
+
+      {% if a.question.image %}
+        <div style="margin:10px 0;">
+          <img src="{{ a.question.image.url }}" style="max-width:100%; border-radius:10px;">
+        </div>
+      {% endif %}
+
+      <p>
+        <b>Your answer:</b>
+        {% if a.selected %}
+          {{ a.question|option_text:a.selected }}
+        {% else %}
+          (blank)
+        {% endif %}
+        |
+        <b>Correct:</b> {{ a.question|option_text:a.question.correct_option }}
+
+        {% if a.is_correct %}
+          <span class="ok">Correct</span>
+        {% else %}
+          <span class="bad">Wrong</span>
+        {% endif %}
+      </p>
+    </div>
+  {% endfor %}
+{% endblock %}
