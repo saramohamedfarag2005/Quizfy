@@ -2,29 +2,51 @@
 {% block title %}Student Login{% endblock %}
 
 {% block content %}
+
 <h1>Student Login</h1>
 
-<form method="post" class="card form-grid">
-{% csrf_token %}
-<div>
-    <label>Username</label>
-    {{ form.username }}
+<div class="card form-wrap">
+  <form method="post" autocomplete="off" novalidate>
+    {% csrf_token %}
+
+    {# ✅ authentication error goes here (wrong username/password) #}
+    {% if form.non_field_errors %}
+      <div class="msg error">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="form-grid">
+
+      <div class="section-title">Login</div>
+
+      <div class="field half">
+        <label>Email or Username</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="msg error">{{ form.username.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half">
+        <label>Password</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="msg error">{{ form.password.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <button class="btn primary btn-full" type="submit">Login</button>
+      </div>
+
+    </div>
+  </form>
 </div>
-
-<div>
-    <label>Password</label>
-    {{ form.password }}
-</div>
-
-{% if form.errors %}
-    <div class="msg error">{{ form.errors }}</div>
-{% endif %}
-
-<button class="btn" type="submit">Login</button>
-</form>
 
 <p style="margin-top:12px;">
-Don’t have an account?
-<a href="{% url 'student_signup' %}">Sign up</a>
+  Don’t have an account?
+  <a href="{% url 'student_signup' %}">Sign up</a>
 </p>
+
 {% endblock %}

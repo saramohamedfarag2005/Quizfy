@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Quiz Settings{% endblock %}
+
+{% block content %}
+<h1>Quiz Settings</h1>
+
+<div class="card form-wrap">
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+
+    <div class="field half">
+      <label>Due date (optional)</label>
+      {{ form.due_at }}
+    </div>
+
+    <div class="field half">
+      <label>Duration (minutes)</label>
+      {{ form.duration_minutes }}
+      <p style="margin:8px 0 0; color:var(--muted); font-size:13px;">
+        Example: 15 = 15 minutes
+      </p>
+    </div>
+
+    <div class="field">
+      <label>Quiz Active</label>
+      {{ form.is_active }}
+    </div>
+
+    <div class="field">
+      <button class="btn primary" type="submit">Save</button>
+      <a class="btn" href="{% url 'teacher_quiz_detail' quiz.id %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="row" style="align-items:flex-end; gap:14px; margin-bottom:14px;">
+  <div>
+    <h1 style="margin:0;">{{ quiz.title }}</h1>
+    <p style="margin:6px 0 0; color: var(--muted);">Code: <b>{{ quiz.code }}</b></p>
+  </div>
+
+  <div class="actions" style="margin-left:auto; align-items:center; margin-top:0;">
+    <a class="btn primary" href="{% url 'create_question' quiz.id %}">+ Add Question</a>
+    <a class="btn" href="{% url 'quiz_submissions' quiz.id %}">Submissions</a>
+
+    <form method="post" action="{% url 'toggle_quiz_active' quiz.id %}" style="margin:0;">
+      {% csrf_token %}
+      {% if quiz.is_active %}
+        <button class="btn danger" type="submit">Stop Quiz</button>
+      {% else %}
+        <button class="btn primary" type="submit">Re-open Quiz</button>
+      {% endif %}
+    </form>
+
+    <a class="btn" href="{% url 'edit_quiz_settings' quiz.id %}">Settings</a>
+  </div>
+</div>
+
+<div class="card">
+  {% if questions %}
+    {% for q in questions %}
+      <div class="qbox">
+        <div class="row">
+          <div class="qtext">
+            Q{{ forloop.counter }}. {{ q.text|default:"(No text)" }}
+          </div>
+
+          <div class="actions" style="margin:0;">
+            <a class="btn" href="{% url 'edit_question' quiz.id q.id %}">Edit</a>
+            <a class="btn danger" href="{% url 'delete_question' quiz.id q.id %}">Delete</a>
+          </div>
+        </div>
+
+        {% if q.image %}
+          <img class="qimg" src="{{ q.image.url }}" alt="Question image">
+        {% endif %}
+
+        <p style="margin:10px 0 0; color:var(--muted);">
+          1) {{ q.option1 }}<br>
+          2) {{ q.option2 }}<br>
+          3) {{ q.option3 }}<br>
+          4) {{ q.option4 }}<br>
+          <span class="ok">Correct:</span> Option {{ q.correct_option }}
+        </p>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="margin:0; color:var(--muted);">No questions yet. Add your first one.</p>
+  {% endif %}
+</div>
+
+<div style="margin-top:14px;">
+  <a class="btn" href="{% url 'teacher_quizzes' %}">← Back</a>
+</div>
+{% endblock %}

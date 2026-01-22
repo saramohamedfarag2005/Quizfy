@@ -1,10 +1,16 @@
-{{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
 <h1>{{ quiz.title }}</h1>
 
-<form method="post">
+{% if remaining_seconds != None %}
+  <div class="msg" id="timerBox">
+    Time left: <b id="timerText"></b>
+  </div>
+{% endif %}
+
+<form id="quizForm" method="post">
   {% csrf_token %}
 
   {% for q in questions %}
@@ -24,4 +30,53 @@
 
   <button class="btn" type="submit">Submit Quiz</button>
 </form>
+
+{% if remaining_seconds != None %}
+<script>
+  const formEl = document.getElementById("quizForm");
+  const timerEl = document.getElementById("timerText");
+  let remaining = Number("{{ remaining_seconds }}");
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return null;
+  }
+
+  function ensureCsrfInput() {
+    if (!formEl.querySelector('input[name="csrfmiddlewaretoken"]')) {
+      const csrf = getCookie("csrftoken");
+      if (csrf) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "csrfmiddlewaretoken";
+        input.value = csrf;
+        formEl.prepend(input);
+      }
+    }
+  }
+
+  function fmt(sec){
+    const m = Math.floor(sec/60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2,"0")}`;
+  }
+
+  function tick(){
+    timerEl.textContent = fmt(remaining);
+
+    if (remaining <= 0) {
+      ensureCsrfInput();
+      formEl.submit();
+      return;
+    }
+
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+
+  tick();
+</script>
+{% endif %}
 {% endblock %}

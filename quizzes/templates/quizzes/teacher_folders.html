@@ -18,7 +18,13 @@
 
     <div class="actions">
       <a class="btn secondary" href="{% url 'folder_detail' f.id %}">Open</a>
-      <a class="btn secondary" href="{% url 'export_folder_submissions_excel' f.id %}">Export Excel</a>
+
+    
+
+      <!-- ✅ NEW Export Boxes -->
+      <a class="btn secondary" href="{% url 'export_folder_boxes_excel' f.id %}">
+        Export Excel (Boxes)
+      </a>
     </div>
   </div>
 {% endfor %}

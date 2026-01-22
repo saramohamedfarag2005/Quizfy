@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 import secrets
 from django.core.validators import RegexValidator
+from django.utils import timezone
+
 
 numeric_only=RegexValidator(
     regex=r'^\d+$',
@@ -11,25 +13,46 @@ numeric_only=RegexValidator(
 def question_image_upload_path(instance, filename):
     return f'quiz_images/quiz_{instance.quiz.id}/{filename}'
     
-
 class Quiz(models.Model):
-    title=models.CharField(max_length=60)
-    code=models.CharField(max_length=40,unique=True,blank=True,null=True)
-    teacher=models.ForeignKey(User, on_delete=models.CASCADE,related_name='quizzes')
-    created_at=models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=60)
+    code = models.CharField(max_length=40, unique=True, blank=True, null=True)
     folder = models.ForeignKey(
-    "SubjectFolder", on_delete=models.SET_NULL,
-    null=True, blank=True, related_name="quizzes"
+    "SubjectFolder",
+    on_delete=models.SET_NULL,
+    null=True,
+    blank=True,
+    related_name="quizzes"
 )
+    teacher = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="quizzes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self,*args,**kwargs):
+    # ✅ Optional: quiz closes after this date/time
+    due_at = models.DateTimeField(null=True, blank=True)
+
+    # ✅ Timer in MINUTES (not seconds)
+    duration_minutes = models.PositiveIntegerField(null=True, blank=True)
+
+    # ✅ Teacher can stop/re-open quiz
+    is_active = models.BooleanField(default=True)
+
+    def is_expired(self):
+        """True if due_at exists and current time is past it."""
+        return self.due_at is not None and timezone.now() > self.due_at
+
+    def can_start(self):
+        """Students can start only if teacher didn't stop it AND it's not expired."""
+        return self.is_active and not self.is_expired()
+
+    def save(self, *args, **kwargs):
+        """Auto-generate a code if missing."""
         if not self.code:
-            self.code=secrets.token_hex(3).upper()
-        super().save(*args,**kwargs)
-
+            self.code = secrets.token_hex(3).upper()
+        super().save(*args, **kwargs)
+ 
     def __str__(self):
-        return f'{self.title} - {self.code}'
-
+        return f"{self.title} - {self.code}"
 class Question(models.Model):
     quiz=models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name='questions')
     text=models.TextField(blank=True)
@@ -53,47 +76,78 @@ class Question(models.Model):
         return self.text[:60] if self.text else f"Question {self.id}"
 
 class Submission(models.Model):
-    quiz=models.ForeignKey(Quiz,on_delete=models.CASCADE, related_name='submissions')
-    student_name=models.CharField(max_length=60)
-    score=models.IntegerField()
-    total=models.IntegerField()
-    submitted_at=models.DateTimeField(auto_now_add=True)
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="submissions")
+
     student_user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="submissions"
     )
 
+    student_name = models.CharField(max_length=60)
+
+    score = models.IntegerField(default=0)
+    total = models.IntegerField(default=0)
+
+    # ✅ timer tracking
+    started_at = models.DateTimeField(null=True, blank=True)
+
+    # ✅ attempt tracking
+
+    attempt_no = models.PositiveIntegerField(default=1)
+
+    # ✅ status
+    is_submitted = models.BooleanField(default=False)
+
+    # ✅ set when finalized (timer ends or student submits)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
         return f"{self.student_name} - {self.quiz.code} ({self.score}/{self.total})"
+
 class Answer(models.Model):
-    submission=models.ForeignKey(Submission,on_delete=models.CASCADE,related_name='answers')
-    question=models.ForeignKey(Question,on_delete=models.CASCADE)
-    selected=models.IntegerField(null=True,blank=True)
-    is_correct=models.BooleanField(default=False)
+    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    selected = models.IntegerField(null=True, blank=True)
+    is_correct = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("submission", "question")
+
+
 class StudentProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="student_profile"
+    )
+
     CITY_CHOICES = [
         ("Riyadh", "Riyadh"),
         ("Jeddah", "Jeddah"),
-        ("Mecca", "Mecca"),
+        ("Dammam", "Dammam"),
+        ("Al-Ahsa","Al-Ahsa"),
         ("Medina", "Medina"),
+        ("Hail", "Hail")
     ]
 
     MAJOR_CHOICES = [
         ("CS", "Computer Science"),
         ("IT", "Information Technology"),
         ("BUS", "Business"),
+        ("LS", "Language Studies")
     ]
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")
 
     first_name = models.CharField(max_length=60)
     second_name = models.CharField(max_length=60)
     third_name = models.CharField(max_length=60)
 
-    university_id = models.CharField(max_length=30, unique=True,validators=[numeric_only])
+    university_id = models.CharField(
+        max_length=30,
+        unique=True,
+        validators=[numeric_only]
+    )
 
     city = models.CharField(max_length=20, choices=CITY_CHOICES)
-    section = models.CharField(max_length=20,validators=[numeric_only])
-
+    section = models.CharField(max_length=20, validators=[numeric_only])
     major = models.CharField(max_length=10, choices=MAJOR_CHOICES)
 
     def __str__(self):
@@ -109,5 +163,14 @@ class SubjectFolder(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.teacher.username})"
+class QuizAttemptPermission(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempt_permissions")
+    student_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="quiz_permissions")
+    allowed_attempts = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = ("quiz", "student_user")
+    
+
 
 # Create your models here.

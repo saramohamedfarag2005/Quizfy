@@ -1,336 +1,347 @@
-/* =========================
-   Quizfy - Clean Pro Dark UI
-   ========================= */
+/* =========================================
+   Quizfy — NEW Modern SaaS Dark UI (2026)
+   No template changes required
+   ========================================= */
 
-   :root{
-    --bg0:#070b14;
-    --bg1:#0b1220;
-    --panel: rgba(255,255,255,.04);
-    --panel2: rgba(255,255,255,.06);
-    --border: rgba(255,255,255,.10);
-    --text: rgba(255,255,255,.92);
-    --muted: rgba(255,255,255,.68);
-    --muted2: rgba(255,255,255,.52);
-    --primary:#3b82f6;
-    --primary2:#2563eb;
-    --danger:#ef4444;
-    --success:#22c55e;
-    --shadow: 0 14px 50px rgba(0,0,0,.45);
-    --radius: 16px;
-  }
-  
-  *{ box-sizing:border-box; }
-  html,body{ height:100%; }
-  body{
-    margin:0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color: var(--text);
-    background:
-      radial-gradient(900px 600px at 20% 10%, rgba(59,130,246,.25) 0%, transparent 60%),
-      radial-gradient(900px 600px at 80% 0%, rgba(34,197,94,.16) 0%, transparent 55%),
-      linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
-  }
-  
-  /* layout */
-  .container{
-    width:min(1100px, 92vw);
-    margin: 26px auto 60px;
-  }
-  
-  /* =========================
-     NAVBAR (smaller + cleaner)
-     ========================= */
-  .topbar{
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: rgba(10,16,30,.65);
-    backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-  .topbar .container{
-    margin:0 auto;
-    padding: 10px 0;           /* smaller height */
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap: 16px;
-  }
-  
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-weight:800;
-    letter-spacing:.2px;
-  }
-  .brand-dot{
-    width:10px;height:10px;border-radius:50%;
-    background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
-    box-shadow: 0 0 0 4px rgba(59,130,246,.18);
-  }
-  
-  nav{
-    display:flex;
-    align-items:center;
-    gap: 12px;
-  }
-  
-  nav a{
-    color: var(--muted);
-    text-decoration:none;
-    font-weight:600;
-    font-size: 14px;
-    padding: 7px 10px;
-    border-radius: 10px;
-    transition: background .15s ease, color .15s ease;
-  }
-  nav a:hover{
-    background: rgba(255,255,255,.06);
-    color: var(--text);
-  }
-  
-  .nav-welcome{
-    color: var(--muted);
-    font-weight:600;
-    font-size: 14px;
-    margin-left: 8px;
-    white-space: nowrap;
-  }
-  
-  /* =========================
-     TYPOGRAPHY
-     ========================= */
-  h1{
-    font-size: clamp(28px, 3.4vw, 44px);
-    letter-spacing: -0.02em;
-    margin: 14px 0 14px;
-  }
-  h2{
-    margin: 18px 0 10px;
-    font-size: 18px;
-    color: var(--muted);
-    font-weight: 750;
-  }
-  p{ color: var(--muted); line-height: 1.5; }
-  
-  /* =========================
-     CARDS
-     ========================= */
-  .card{
-    background: linear-gradient(180deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,.03) 100%);
-    border: 1px solid rgba(255,255,255,.10);
-    border-radius: var(--radius);
-    padding: 18px;
-    box-shadow: var(--shadow);
-  }
-  
-  /* compact cards (for lists) */
-  .card.compact{
-    padding: 14px;
-    border-radius: 14px;
-    box-shadow: 0 10px 34px rgba(0,0,0,.35);
-  }
-  
-  /* rows */
-  .row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap: 12px;
-  }
-  
-  /* =========================
-     BUTTONS (real buttons)
-     ========================= */
-  .btn{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:8px;
-    padding: 10px 14px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.06);
-    color: var(--text);
-    font-weight: 700;
-    font-size: 14px;
-    cursor:pointer;
-    text-decoration:none;
-    transition: transform .08s ease, filter .15s ease, background .15s ease;
-  }
-  .btn:hover{ background: rgba(255,255,255,.09); }
-  .btn:active{ transform: translateY(1px); }
-  
-  .btn.primary{
-    border: 0;
-    background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
-  }
-  .btn.primary:hover{ filter: brightness(1.06); }
-  
-  .btn.danger{
-    border: 0;
-    background: linear-gradient(180deg, #ff5a5a 0%, var(--danger) 100%);
-  }
-  .btn.danger:hover{ filter: brightness(1.06); }
-  
-  .actions{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top: 10px;
-  }
-  
-  /* =========================
-     FORMS (pro, not chunky)
-     ========================= */
-  form{ margin: 0; }
-  
-  .form-wrap{
-    max-width: 980px;
-    margin: 0 auto;
-  }
-  
-  .form-grid{
-    display:grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 12px;
-  }
-  
-  .field{ grid-column: span 12; }
-  @media (min-width: 900px){
-    .field.third{ grid-column: span 4; }
-    .field.half{ grid-column: span 6; }
-  }
-  
-  .section-title{
-    grid-column: span 12;
-    margin-top: 6px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,.08);
-    color: var(--muted);
-    font-weight: 800;
-    letter-spacing: .2px;
-  }
-  
-  label{
-    display:block;
-    margin: 0 0 6px;
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 700;
-  }
-  
-  input, select, textarea{
-    width: 100%;
-    padding: 11px 12px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.05);
-    color: var(--text);
-    outline: none;
-    transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
-  }
-  
-  input::placeholder, textarea::placeholder{ color: var(--muted2); }
-  
-  input:focus, select:focus, textarea:focus{
-    border-color: rgba(59,130,246,.55);
-    box-shadow: 0 0 0 4px rgba(59,130,246,.18);
-    background: rgba(255,255,255,.07);
-  }
-  
-  /* checkbox/radio spacing */
-  input[type="checkbox"], input[type="radio"]{
-    width: auto;
-    padding: 0;
-    box-shadow: none;
-  }
-  
-  /* submit button full width inside forms (optional class) */
-  .btn-full{ width: 100%; }
-  
-  /* =========================
-     QUIZ REVIEW UI
-     ========================= */
-  .qbox{ padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); }
-  .qtext{ font-weight: 750; color: var(--text); margin-bottom: 6px; }
-  .qimg{ max-width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,.10); margin: 10px 0; }
-  .ok{ color: #43ff86; font-weight: 800; }
-  .bad{ color: #ff7b7b; font-weight: 800; }
-  
-  /* =========================
-     MESSAGES
-     ========================= */
-  .messages{ margin-top: 12px; }
-  .msg{
-    padding: 10px 12px;
-    border-radius: 12px;
-    margin: 8px 0;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.06);
-  }
-  .msg.error{ background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35); }
-  .msg.success{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.35); }
-  
-  /* =========================
-     CHROME AUTOFILL FIX
-     ========================= */
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus,
-  textarea:-webkit-autofill,
-  select:-webkit-autofill{
-    -webkit-text-fill-color: rgba(255,255,255,.92) !important;
-    caret-color: rgba(255,255,255,.92) !important;
-    transition: background-color 999999s ease-in-out 0s;
-    -webkit-box-shadow: 0 0 0 1000px rgba(0,0,0,.35) inset !important;
-    box-shadow: 0 0 0 1000px rgba(0,0,0,.35) inset !important;
-    border: 1px solid rgba(255,255,255,.10) !important;
-  }
-  /* ================================
-   UNIFY ALL INPUT STATES (FINAL)
-================================ */
+/* ---------- Theme tokens ---------- */
+:root{
+  /* Background */
+  --bg0:#070a14;
+  --bg1:#0b1224;
 
-/* Base input look */
-input,
-select,
-textarea {
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.08),
-    rgba(255,255,255,0.03)
-  );
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.14);
+  /* Surfaces */
+  --card0: rgba(16, 23, 42, .74);
+  --card1: rgba(12, 18, 36, .62);
+
+  /* Borders & text */
+  --border: rgba(255,255,255,.10);
+  --border2: rgba(255,255,255,.08);
+  --text: rgba(255,255,255,.92);
+  --muted: rgba(255,255,255,.70);
+  --muted2: rgba(255,255,255,.52);
+
+  /* Accent (NO teal) */
+  --primary:#3b82f6;
+  --primary2:#2563eb;
+
+  /* Status */
+  --danger:#ef4444;
+  --success:#22c55e;
+
+  /* Effects */
+  --shadow: 0 18px 55px rgba(0,0,0,.40);
+  --shadow2: 0 10px 28px rgba(0,0,0,.30);
+  --radius: 18px;
+
+  /* Spacing */
+  --gap: 14px;
+}
+
+/* ---------- Global reset ---------- */
+*{ box-sizing:border-box; min-width:0; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+
+  /* New “clean modern” lighting (no ugly green bands) */
+  background:
+    radial-gradient(900px 560px at 16% 0%, rgba(59,130,246,.18) 0%, transparent 70%),
+    radial-gradient(860px 560px at 86% 0%, rgba(124,58,237,.12) 0%, transparent 72%),
+    radial-gradient(680px 520px at 55% 120%, rgba(255,255,255,.05) 0%, transparent 75%),
+    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
+  background-attachment: fixed;
+}
+
+/* Subtle noise so gradients feel “premium” not flat */
+body::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .06;
+  mix-blend-mode: overlay;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E");
+}
+
+/* ---------- Layout ---------- */
+.container{
+  width: min(1120px, 92vw);
+  margin: 22px auto 70px;
+}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(8,12,24,.72);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.topbar .container{
+  margin:0 auto;
+  padding: 10px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight: 850;
+  letter-spacing: .2px;
+}
+.brand-dot{
+  width:10px;height:10px;border-radius:50%;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.16);
+}
+
+nav{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap: wrap;          /* protects against long nav */
+}
+nav a{
+  color: var(--muted);
+  text-decoration:none;
+  font-weight: 650;
+  font-size: 14px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+nav a:hover{
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+}
+.nav-welcome{
+  color: var(--muted);
+  font-weight: 650;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* ---------- Typography ---------- */
+h1{
+  font-size: clamp(30px, 3.6vw, 46px);
+  letter-spacing: -0.03em;
+  margin: 12px 0 16px;
+  text-shadow: 0 14px 35px rgba(0,0,0,.45);
+}
+h2{
+  margin: 18px 0 10px;
+  font-size: 18px;
+  color: rgba(255,255,255,.78);
+  font-weight: 750;
+}
+p{ color: var(--muted); line-height: 1.55; }
+
+/* ---------- Cards ---------- */
+.card{
+  background: linear-gradient(180deg, var(--card0) 0%, var(--card1) 100%);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.card.compact{
+  padding: 14px;
+  border-radius: 16px;
+  box-shadow: var(--shadow2);
+}
+.card + .card{ margin-top: 16px; }
+
+/* Keep long strings from breaking layout */
+.card, .row, nav, .actions{ min-width:0; }
+.card *{ overflow-wrap:anywhere; }
+
+/* ---------- Rows / action clusters ---------- */
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding: 10px 14px;
   border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-weight: 750;
+  font-size: 14px;
+  cursor:pointer;
+  text-decoration:none;
+  transition: transform .08s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+  max-width:100%;
+}
+.btn:hover{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+}
+.btn:active{ transform: translateY(1px); }
+
+.btn.primary{
+  border: 0;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary2) 100%);
+}
+.btn.primary:hover{ filter: brightness(1.06); }
+
+.btn.danger{
+  border: 0;
+  background: linear-gradient(180deg, #ff6565 0%, var(--danger) 100%);
+}
+.btn.danger:hover{ filter: brightness(1.06); }
+
+.btn-full{ width: 100%; }
+
+/* ---------- Forms (modern spacing + stable) ---------- */
+form{ margin:0; }
+
+.form-wrap{
+  max-width: 980px;
+  margin: 0 auto;
 }
 
-/* Focus (same for all) */
-input:focus,
-select:focus,
-textarea:focus {
-  background: linear-gradient(
-    180deg,
-    rgba(255,255,255,0.10),
-    rgba(255,255,255,0.05)
-  );
-  border-color: rgba(59,130,246,0.65);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+.form-grid{
+  display:grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+}
+
+.field{ grid-column: span 12; }
+@media (min-width: 900px){
+  .field.third{ grid-column: span 4; }
+  .field.half{ grid-column: span 6; }
+}
+
+.section-title{
+  grid-column: span 12;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  color: rgba(255,255,255,.72);
+  font-weight: 850;
+  letter-spacing: .2px;
+}
+
+label{
+  display:block;
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+input, select, textarea{
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: #fff;
   outline: none;
+  transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+}
+input::placeholder, textarea::placeholder{ color: var(--muted2); }
+
+input:focus, select:focus, textarea:focus{
+  border-color: rgba(59,130,246,.78);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.20);
+  background: rgba(255,255,255,.075);
 }
 
-/* Autofill — force SAME look */
+/* Radios/checkboxes: remove red and match theme */
+input[type="radio"], input[type="checkbox"]{
+  width:auto;
+  padding:0;
+  accent-color: var(--primary);
+}
+
+/* ---------- Messages ---------- */
+.messages{ margin-top: 12px; }
+.msg{
+  padding: 10px 12px;
+  border-radius: 14px;
+  margin: 8px 0;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.06);
+}
+.msg.error{ background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.35); }
+.msg.success{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.35); }
+
+/* ---------- Quiz review blocks ---------- */
+.qbox{ padding: 12px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.qtext{ font-weight: 800; color: var(--text); margin-bottom: 6px; }
+.qimg{ max-width: 100%; border-radius: 14px; border: 1px solid rgba(255,255,255,.10); margin: 10px 0; }
+.ok{ color: #43ff86; font-weight: 850; }
+.bad{ color: #ff7b7b; font-weight: 850; }
+
+/* ---------- Chrome autofill (keep your theme) ---------- */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff;
-  box-shadow:
-    0 0 0px 1000px rgba(18,24,38,0.96) inset,
-    0 0 0 0 transparent !important;
-  -webkit-box-shadow:
-    0 0 0px 1000px rgba(18,24,38,0.96) inset !important;
-  border: 1px solid rgba(255,255,255,0.14);
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill{
+  -webkit-text-fill-color: rgba(255,255,255,.92) !important;
+  caret-color: rgba(255,255,255,.92) !important;
   transition: background-color 999999s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0 1000px rgba(13,18,36,.95) inset !important;
+  box-shadow: 0 0 0 1000px rgba(13,18,36,.95) inset !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
 }
+
+/* ---------- “Don’t break when lists grow” patches ---------- */
+nav, .row, .actions{ flex-wrap: wrap; }
+.btn, input, select, textarea{ max-width: 100%; }
+
+/* ---------- Generic vertical rhythm inside cards ---------- */
+.card > * + *{ margin-top: 14px; }
+
+/* ---------- Fix: dashboard/entry spacing without template changes ---------- */
+.card input + .btn,
+.card input + button{
+  margin-top: 12px;
+}
+.card .btn{ align-self: flex-start; }
+
+/* ---------- Fix: Back button placement under a card ---------- */
+.card + a.btn,
+.card + .btn{
+  display:inline-flex;
+  margin-top: 14px;
+}
+.card + a:not(.btn){
+  display:inline-flex;
+  margin-top:14px;
+  padding:10px 14px;
+  border-radius:14px;
+  text-decoration:none;
+  color:var(--text);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+}
+.card + a:not(.btn):hover{ background: rgba(255,255,255,.10); }

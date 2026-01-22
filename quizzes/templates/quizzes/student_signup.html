@@ -4,65 +4,129 @@
 
 <h1>Student Signup</h1>
 
+<style>
+  /* Minimal error styling that won't break your layout */
+  .form-errors {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(220, 53, 69, 0.08);
+    border: 1px solid rgba(220, 53, 69, 0.25);
+    font-size: 14px;
+  }
+  .field-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #dc3545;
+  }
+  .field-error ul {
+    margin: 0;
+    padding-left: 16px;
+  }
+  .field-error li {
+    margin: 2px 0;
+  }
+  .input-error input,
+  .input-error select,
+  .input-error textarea {
+    border: 1px solid rgba(220, 53, 69, 0.6) !important;
+    outline: none;
+  }
+</style>
+
 <div class="card form-wrap">
-  <form method="post" autocomplete="off">
+  <form method="post" autocomplete="off" novalidate>
     {% csrf_token %}
+
+    {# Global (non-field) errors only show once here #}
+    {% if form.non_field_errors %}
+      <div class="form-errors">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
 
     <div class="form-grid">
 
-      <div class="section-title">Personal Information</div>
-
-      <div class="field third">
-        <label>First Name</label>
-        {{ form.first_name }}
-      </div>
-      <div class="field third">
-        <label>Second Name</label>
-        {{ form.second_name }}
-      </div>
-      <div class="field third">
-        <label>Third Name</label>
-        {{ form.third_name }}
-      </div>
-
-      <div class="section-title">University Information</div>
-
-      <div class="field half">
-        <label>University ID</label>
-        {{ form.university_id }}
-      </div>
-      <div class="field half">
-        <label>Section</label>
-        {{ form.section }}
-      </div>
-
-      <div class="field half">
-        <label>City</label>
-        {{ form.city }}
-      </div>
-      <div class="field half">
-        <label>Major</label>
-        {{ form.major }}
-      </div>
-
       <div class="section-title">Account Information</div>
 
-      <div class="field half">
-        <label>Username</label>
-        {{ form.username }}
-      </div>
-      <div class="field half">
-        <label>Email</label>
-        {{ form.email }}
+      <div class="field third {% if form.first_name.errors %}input-error{% endif %}">
+        <label>First Name</label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}
+          <div class="field-error">{{ form.first_name.errors }}</div>
+        {% endif %}
       </div>
 
-      <div class="field half">
+      <div class="field third {% if form.second_name.errors %}input-error{% endif %}">
+        <label>Second Name</label>
+        {{ form.second_name }}
+        {% if form.second_name.errors %}
+          <div class="field-error">{{ form.second_name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field third {% if form.third_name.errors %}input-error{% endif %}">
+        <label>Third Name</label>
+        {{ form.third_name }}
+        {% if form.third_name.errors %}
+          <div class="field-error">{{ form.third_name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.university_id.errors %}input-error{% endif %}">
+        <label>University ID</label>
+        {{ form.university_id }}
+        {% if form.university_id.errors %}
+          <div class="field-error">{{ form.university_id.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.section.errors %}input-error{% endif %}">
+        <label>Section</label>
+        {{ form.section }}
+        {% if form.section.errors %}
+          <div class="field-error">{{ form.section.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.city.errors %}input-error{% endif %}">
+        <label>City</label>
+        {{ form.city }}
+        {% if form.city.errors %}
+          <div class="field-error">{{ form.city.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.major.errors %}input-error{% endif %}">
+        <label>Major</label>
+        {{ form.major }}
+        {% if form.major.errors %}
+          <div class="field-error">{{ form.major.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.email.errors %}input-error{% endif %}">
+        <label>Email</label>
+        {{ form.email }}
+        {% if form.email.errors %}
+          <div class="field-error">{{ form.email.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="field half {% if form.password1.errors %}input-error{% endif %}">
         <label>Password</label>
         {{ form.password1 }}
+        {% if form.password1.errors %}
+          <div class="field-error">{{ form.password1.errors }}</div>
+        {% endif %}
       </div>
-      <div class="field half">
+
+      <div class="field half {% if form.password2.errors %}input-error{% endif %}">
         <label>Confirm Password</label>
         {{ form.password2 }}
+        {% if form.password2.errors %}
+          <div class="field-error">{{ form.password2.errors }}</div>
+        {% endif %}
       </div>
 
       <div class="field">

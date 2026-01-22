@@ -1,19 +1,26 @@
+
+
 import os
 from pathlib import Path
+
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-key")
-DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
+
+# ✅ keep DEBUG defined ONCE
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
 ALLOWED_HOSTS_RAW = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
-ALLOWED_HOSTS = ["*"] if ALLOWED_HOSTS_RAW.strip() == "*" else [
-    h.strip() for h in ALLOWED_HOSTS_RAW.split(",") if h.strip()
-]
+ALLOWED_HOSTS = (
+    ["*"]
+    if ALLOWED_HOSTS_RAW.strip() == "*"
+    else [h.strip() for h in ALLOWED_HOSTS_RAW.split(",") if h.strip()]
+)
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com"
+    "https://*.onrender.com",
 ]
 
 INSTALLED_APPS = [
@@ -53,7 +60,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
         },
-    },
+    }
 ]
 
 DATABASES = {
@@ -82,9 +89,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-LOGIN_URL = "/teacher/login/"
-LOGIN_REDIRECT_URL = "/teacher/quizzes/"
-LOGOUT_REDIRECT_URL = "/teacher/login/"
+# ✅ IMPORTANT: make defaults student-friendly (your issue was redirecting to teacher login)
+LOGIN_URL = "/student/login/"
+LOGIN_REDIRECT_URL = "/student/dashboard/"
+LOGOUT_REDIRECT_URL = "/student/login/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"

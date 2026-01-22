@@ -1,37 +1,68 @@
 {% extends "base.html" %}
-{% block title %}{{ folder.name }}{% endblock %}
+{% block title %}Folder: {{ folder.name }}{% endblock %}
 
 {% block content %}
-<div class="row">
-  <h1>{{ folder.name }}</h1>
 
-  <div class="actions">
-    <a class="btn" href="{% url 'create_quiz' %}?folder={{ folder.id }}">
-      + Create Quiz in This Folder
-    </a>
-    <a class="btn secondary" href="{% url 'export_folder_submissions_excel' folder.id %}">
-      Export Excel
-    </a>
+<div class="row" style="align-items:flex-end; gap:14px; margin-bottom:14px;">
+  <div>
+    <h1 style="margin:0;">{{ folder.name }}</h1>
+    <p style="margin:6px 0 0; color:var(--muted);">
+      Quizzes in this folder
+    </p>
+  </div>
+
+  <div class="actions" style="margin-left:auto;">
+    <a class="btn" href="{% url 'teacher_quizzes' %}">← Back</a>
+
+    <a class="btn primary" href="{% url 'create_quiz' %}">+ Create Quiz</a>
+
+    
   </div>
 </div>
 
-{% if not quizzes %}
-  <p>No quizzes in this folder yet.</p>
+{% if quizzes %}
+  {% for quiz in quizzes %}
+    <div class="card compact">
+      <div class="row">
+        <div>
+          <h2 style="margin:0; font-size:18px; color:var(--text);">
+            {{ quiz.title }}
+          </h2>
+          <p style="margin:6px 0 0; color:var(--muted);">
+            Code: <b>{{ quiz.code }}</b>
+            {% if quiz.created_at %} · Created: {{ quiz.created_at|date:"M d, Y" }}{% endif %}
+          </p>
+        </div>
+
+        <div class="actions" style="margin:0;">
+          {# ✅ THIS IS THE NEW BUTTON YOU WANT #}
+          <a class="btn" href="{% url 'teacher_quiz_detail' quiz.id %}">Open</a>
+
+          <a class="btn" href="{% url 'create_question' quiz.id %}">+ Add Q</a>
+
+          <a class="btn" href="{% url 'quiz_submissions' quiz.id %}">Submissions</a>
+
+          <a class="btn" href="{% url 'export_submissions_excel' quiz.id %}">
+            Export Quiz Excel
+          </a>
+
+          <a class="btn" href="{% url 'move_quiz' quiz.id %}">
+            Move
+          </a>
+
+          <a class="btn danger" href="{% url 'delete_quiz' quiz.id %}">
+            Delete
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="card">
+    <p style="margin:0; color:var(--muted);">
+      No quizzes in this folder yet.
+    </p>
+  </div>
 {% endif %}
 
-{% for q in quizzes %}
-  <div class="card">
-    <h3>{{ q.title }}</h3>
-    <p><b>Code:</b> {{ q.code }}</p>
-
-    <div class="actions">
-      <a class="btn secondary" href="{% url 'create_question' q.id %}">Add Question</a>
-      <a class="btn secondary" href="{% url 'quiz_submissions' q.id %}">Submissions</a>
-      <a class="btn secondary" href="{% url 'move_quiz' q.id %}">Move</a>
-      <a class="btn danger" href="{% url 'delete_quiz' q.id %}">Delete</a>
-    </div>
-  </div>
-{% endfor %}
-
-<a class="btn secondary" href="{% url 'teacher_quizzes' %}">← Back to Subjects</a>
 {% endblock %}

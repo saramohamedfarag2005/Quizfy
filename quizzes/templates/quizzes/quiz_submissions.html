@@ -1,18 +1,215 @@
 {% extends "base.html"%}
+{% load quiz_extras %}
+
 {% block title %}Submissions{% endblock %}
+
 {% block content %}
 <h1>Submissions</h1>
-<p><b>Quiz:</b> {{quiz.title}} ({{quiz.code}})</p>
+<p><b>Quiz:</b> {{ quiz.title }} ({{ quiz.code }})</p>
 
 {% if not submissions %}
-<p>No submissions yet.</p>
+  <p>No submissions yet.</p>
 {% endif %}
 
 {% for s in submissions %}
-<div class="card">
-    <p><b>{{s.student_name}}</b></p>
-    <p>Score: {{s.score}}/{{s.total}}</p>
-    <p>Submitted: {{s.submitted_at}}</p>
-</div>
+  <div class="card submission-card">
+    <div class="sub-body">
+      <p class="student-name"><b>{{ s.student_name }}</b></p>
+      <p class="muted">Score: <b>{{ s.score }}/{{ s.total }}</b></p>
+      <p class="muted">Submitted: {{ s.submitted_at }}</p>
+    </div>
+
+    {% if s.student_user %}
+      {% with allowed=attempt_map|get_item:s.student_user.id|default:1 %}
+        <div class="sub-footer">
+          <div class="footer-left">
+            <span class="attempt-pill">
+              Attempts
+              <span class="attempt-count">{{ allowed }}</span>
+            </span>
+
+            <div class="stepper" aria-label="Attempts control">
+              <!-- decrease -->
+              <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="delta" value="-1">
+                <button
+                  type="submit"
+                  class="stepper-btn"
+                  aria-label="Decrease attempts"
+                  {% if allowed|add:0 <= 1 %}disabled{% endif %}
+                >
+                  –
+                </button>
+              </form>
+
+              <div class="stepper-value">{{ allowed }}</div>
+
+              <!-- increase -->
+              <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="delta" value="1">
+                <button
+                  type="submit"
+                  class="stepper-btn"
+                  aria-label="Increase attempts"
+                >
+                  +
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {% if quiz.folder %}
+            <a class="btn secondary export-btn"
+               href="{% url 'export_student_folder_excel' quiz.folder.id s.student_user.id %}">
+              Export Student (Folder)
+            </a>
+          {% endif %}
+        </div>
+      {% endwith %}
+    {% else %}
+      <div class="sub-footer">
+        <div class="footer-left">
+          <span class="attempt-pill">
+            Attempts
+            <span class="attempt-count">1</span>
+          </span>
+        </div>
+      </div>
+    {% endif %}
+  </div>
 {% endfor %}
+
+<style>
+  /* Card spacing polish */
+  .submission-card{
+    padding: 18px 18px 14px;
+  }
+
+  .sub-body{
+    padding: 4px 2px 14px;
+  }
+
+  .student-name{
+    font-size: 18px;
+    margin: 0 0 8px;
+  }
+
+  .muted{
+    margin: 6px 0;
+    opacity: .85;
+  }
+
+  /* Footer bar */
+  .sub-footer{
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 14px;
+  }
+
+  .footer-left{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    flex-wrap:wrap;
+  }
+
+  /* Attempts pill */
+  .attempt-pill{
+    display:inline-flex;
+    align-items:center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.10);
+    font-size: 13px;
+    color: rgba(255,255,255,.88);
+  }
+
+  .attempt-count{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 30px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(37,99,235,.18);
+    border: 1px solid rgba(37,99,235,.35);
+    color: rgba(255,255,255,.92);
+    font-weight: 800;
+    font-size: 13px;
+  }
+
+  /* Stepper (professional, not random buttons) */
+  .stepper{
+    display:flex;
+    align-items:center;
+    border-radius: 14px;
+    overflow:hidden;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.05);
+  }
+
+  .stepper-btn{
+    width: 42px;
+    height: 38px;
+    border: 0;
+    background: transparent;
+    color: rgba(255,255,255,.92);
+    font-weight: 900;
+    font-size: 18px;
+    cursor:pointer;
+    transition: background .12s ease, transform .06s ease;
+  }
+
+  .stepper-btn:hover{
+    background: rgba(255,255,255,.07);
+  }
+
+  .stepper-btn:active{
+    transform: scale(.98);
+  }
+
+  .stepper-btn:disabled{
+    opacity: .45;
+    cursor: not-allowed;
+  }
+
+  .stepper-value{
+    width: 46px;
+    height: 38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 800;
+    color: rgba(255,255,255,.92);
+    border-left: 1px solid rgba(255,255,255,.10);
+    border-right: 1px solid rgba(255,255,255,.10);
+  }
+
+  /* Export button alignment */
+  .export-btn{
+    white-space: nowrap;
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 640px){
+    .sub-footer{
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .export-btn{
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
 {% endblock %}
