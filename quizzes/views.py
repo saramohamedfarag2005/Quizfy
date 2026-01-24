@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,staff_member_required
 from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
@@ -22,7 +22,10 @@ from django.db import transaction
 from django.utils import timezone
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
-
+from django.core.mail import send_mail
+from django.contrib import messages
+from django.shortcuts import redirect
+from django.conf import settings
 
 
 def home(request):
