@@ -2,42 +2,52 @@ from django import template
 
 register = template.Library()
 
-@register.filter(name="option_text")
-def option_text(question, key):
-    """
-    Works with models that store options as fields like:
-    option1, option2, option3, option4
-    and keys like: 1/2/3/4 or "1"/"2"/"3"/"4"
-    OR "A"/"B"/"C"/"D"
-    """
-    if question is None or key in (None, "", " "):
-        return ""
-
-    # Normalize key
-    k = str(key).strip()
-
-    # Support A/B/C/D
-    map_abcd = {"A": "1", "B": "2", "C": "3", "D": "4"}
-    if k.upper() in map_abcd:
-        k = map_abcd[k.upper()]
-
-    # Now k should be "1".."4"
-    field_map = {
-        "1": "option1",
-        "2": "option2",
-        "3": "option3",
-        "4": "option4",
-    }
-
-    field_name = field_map.get(k)
-    if not field_name:
-        return ""
-
-    return getattr(question, field_name, "") or ""
+@register.filter
+def get_item(d, key):
+    """Safely get dict item by key in templates."""
+    if not d:
+        return None
+    try:
+        return d.get(key)
+    except Exception:
+        return None
 
 
 @register.filter
-def get_item(d, key):
-    if d is None:
-        return None
-    return d.get(key)
+def option_text(question, key):
+    """
+    Convert stored answer key into the visible option text.
+
+    Supports BOTH:
+    - Old style: question.options = {"A": "...", "B": "..."}
+    - Current style: question.option1/2/3/4
+
+    key can be: "A"/"B"/"C"/"D" OR 1/2/3/4 OR "option1"...
+    """
+    if question is None or key is None:
+        return ""
+
+    k = str(key).strip()
+
+    # 1) If you ever used JSONField options
+    opts = getattr(question, "options", None)
+    if isinstance(opts, dict):
+        return opts.get(k, "") or opts.get(k.upper(), "") or ""
+
+    # 2) Normal DB fields option1..option4
+    mapping = {
+        "A": getattr(question, "option1", ""),
+        "B": getattr(question, "option2", ""),
+        "C": getattr(question, "option3", ""),
+        "D": getattr(question, "option4", ""),
+        "1": getattr(question, "option1", ""),
+        "2": getattr(question, "option2", ""),
+        "3": getattr(question, "option3", ""),
+        "4": getattr(question, "option4", ""),
+        "option1": getattr(question, "option1", ""),
+        "option2": getattr(question, "option2", ""),
+        "option3": getattr(question, "option3", ""),
+        "option4": getattr(question, "option4", ""),
+    }
+
+    return mapping.get(k, "") or mapping.get(k.upper(), "") or ""
