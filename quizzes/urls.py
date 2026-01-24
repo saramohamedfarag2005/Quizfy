@@ -112,6 +112,7 @@ path(
     ),
     name="password_reset_complete",
 ),
+path("debug/send-email/", views.test_send_email),
 
 
 

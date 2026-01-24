@@ -1373,3 +1373,12 @@ def send_test_email(request):
     except Exception as e:
         messages.error(request, f"SMTP failed: {e}")
     return redirect("teacher_quizzes")
+def test_send_email(request):
+    send_mail(
+        subject="Quizfy Test Email",
+        message="Hello! This is a test from Quizfy via SendGrid.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=["YOUR_PERSONAL_EMAIL@gmail.com"],
+        fail_silently=False,
+    )
+    return HttpResponse("Sent (check logs + inbox)")
