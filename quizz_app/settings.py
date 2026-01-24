@@ -129,7 +129,8 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "quizfy.app@gmail.com"
 SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
 
 # Use a custom backend that sends through SendGrid API (HTTPS)
-EMAIL_BACKEND = "quizz_app.email_backends.SendGridEmailBackend"
+EMAIL_BACKEND = "quizz_app.email_backends.SendGridBackend"
+
 LOGGING = {
   "version": 1,
   "disable_existing_loggers": False,
