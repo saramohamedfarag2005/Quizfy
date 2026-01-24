@@ -2,31 +2,39 @@ from django import template
 
 register = template.Library()
 
-
-@register.filter
-def option_text(question, selected):
+@register.filter(name="option_text")
+def option_text(question, key):
     """
-    Works with Question model that has: option1, option2, option3, option4
-    selected might be: "A"/"B"/"C"/"D" OR "1"/"2"/"3"/"4"
+    Works with models that store options as fields like:
+    option1, option2, option3, option4
+    and keys like: 1/2/3/4 or "1"/"2"/"3"/"4"
+    OR "A"/"B"/"C"/"D"
     """
-    if not question or not selected:
+    if question is None or key in (None, "", " "):
         return ""
 
-    key = str(selected).strip().upper()
+    # Normalize key
+    k = str(key).strip()
 
-    mapping = {
-        "A": question.option1,
-        "B": question.option2,
-        "C": question.option3,
-        "D": question.option4,
-        "1": question.option1,
-        "2": question.option2,
-        "3": question.option3,
-        "4": question.option4,
+    # Support A/B/C/D
+    map_abcd = {"A": "1", "B": "2", "C": "3", "D": "4"}
+    if k.upper() in map_abcd:
+        k = map_abcd[k.upper()]
+
+    # Now k should be "1".."4"
+    field_map = {
+        "1": "option1",
+        "2": "option2",
+        "3": "option3",
+        "4": "option4",
     }
 
-    val = mapping.get(key, "")
-    return val or ""
+    field_name = field_map.get(k)
+    if not field_name:
+        return ""
+
+    return getattr(question, field_name, "") or ""
+
 
 @register.filter
 def get_item(d, key):
