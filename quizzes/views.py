@@ -1350,3 +1350,22 @@ def export_student_folder_excel(request, folder_id, student_id):
 def quiz_status(request, quiz_code):
     quiz = get_object_or_404(Quiz, code=quiz_code)
     return JsonResponse({"active": bool(quiz.is_active)})
+@staff_member_required
+def send_test_email(request):
+    to_email = request.user.email
+    if not to_email:
+        messages.error(request, "Your teacher account has no email saved in User.email.")
+        return redirect("teacher_quizzes")
+
+    try:
+        send_mail(
+            subject="Quizfy SMTP Test ✅",
+            message="If you received this, Render + Gmail SMTP works.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[to_email],
+            fail_silently=False,
+        )
+        messages.success(request, f"Test email sent to {to_email}. Check inbox/spam.")
+    except Exception as e:
+        messages.error(request, f"SMTP failed: {e}")
+    return redirect("teacher_quizzes")
