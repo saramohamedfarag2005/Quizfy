@@ -3,11 +3,10 @@ from django import template
 register = template.Library()
 
 @register.filter
-def option_text(question, option_key):
-    if not option_key:
-        return "(blank)"
-    return question.option_text(option_key)
-register = template.Library()
+def option_text(question, key):
+    if not question or not key:
+        return ""
+    return question.options.get(key, "")
 
 @register.filter
 def get_item(d, key):
