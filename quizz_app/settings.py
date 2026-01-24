@@ -112,12 +112,7 @@ LOGGING = {
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@quizfy.com")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
+
 EMAIL_TIMEOUT = 10
 # If you want password reset links to point to your Render domain
 # (helps when generating absolute URLs in emails)
@@ -141,3 +136,11 @@ LOGGING = {
     "quizfy.mail": {"handlers": ["console"], "level": "INFO"},
   },
 }
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = "quizz_app.email_backends.SendGridEmailBackend"
+    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "no-reply@quizfy.com")
+else:
+    # local/dev fallback
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
