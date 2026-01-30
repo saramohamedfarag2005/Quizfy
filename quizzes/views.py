@@ -803,7 +803,7 @@ def _student_info(submission):
         university_id = sp.university_id or ""
        
 
-    return full_name, university_id, section
+    return full_name, university_id, 
 
 
 def _autosize(ws, max_width=45):
