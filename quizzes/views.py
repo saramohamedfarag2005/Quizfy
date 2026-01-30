@@ -889,7 +889,7 @@ def export_submissions_excel(request, quiz_id):
     # ---------------------------
     # Row 2: Subtitle Bar
     # ---------------------------
-   ws.merge_cells("A2:F2")
+    ws.merge_cells("A2:F2")
     ws["A2"] = (
         f"Quiz: {quiz.title}  |  Code: {quiz.code}  |  "
         f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}  |  Teacher: {request.user.username}"
