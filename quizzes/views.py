@@ -1098,7 +1098,7 @@ def export_folder_boxes_excel(request, folder_id):
         start_data_row = row
 
         for s in latest:
-            full_name, university_id, section = _student_info(s)
+            full_name, university_id, 
             score = int(s.score or 0)
             total = int(s.total or 0)
             pct = (score / total) if total else 0
@@ -1107,7 +1107,7 @@ def export_folder_boxes_excel(request, folder_id):
             ans_map = {a.question_id: (1 if a.is_correct else 0) for a in s.answers.all()}
             per_q = [ans_map.get(qq.id, "") for qq in questions]
 
-            values = [full_name, university_id, section, score, total, pct] + per_q
+            values = [full_name, university_id, score, total, pct] + per_q
 
             for c, v in enumerate(values, start=1):
                 dc = ws.cell(row=row, column=c, value=v)
