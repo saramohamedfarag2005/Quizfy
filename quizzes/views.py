@@ -31,6 +31,19 @@ import qrcode
 from io import BytesIO
 
 
+def student_required(view_func):
+    return user_passes_test(
+        lambda u: u.is_authenticated and not u.is_staff and hasattr(u, "student_profile"),
+        login_url="/student/login/"
+    )(view_func)
+
+def staff_required(view_func):
+    return user_passes_test(
+        lambda u: u.is_authenticated and u.is_staff,
+        login_url="/teacher/login/"
+    )(view_func)
+
+
 def home(request):
     if request.user.is_authenticated:
         if request.user.is_staff:
@@ -67,18 +80,6 @@ def quiz_qr_code(request, quiz_id):
     except Exception as e:
         # Return a blank 1x1 pixel if generation fails
         return HttpResponse(bytes.fromhex("89504e470d0a1a0a0000000d494844520000000100000001080202000090773db30000000c49444154785e6300010000050001000b0b80c30000000049454e44ae426082"), content_type="image/png")
-
-def student_required(view_func):
-    return user_passes_test(
-        lambda u: u.is_authenticated and not u.is_staff and hasattr(u, "student_profile"),
-        login_url="/student/login/"
-    )(view_func)
-
-def staff_required(view_func):
-    return user_passes_test(
-        lambda u: u.is_authenticated and u.is_staff,
-        login_url="/teacher/login/"
-    )(view_func)
 
 
 
