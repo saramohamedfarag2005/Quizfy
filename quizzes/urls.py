@@ -9,10 +9,12 @@ urlpatterns = [
     path("landing/", views.landing, name="landing"),
     path("teacher/help-bot/", views.teacher_help_bot, name="teacher_help_bot"),
 
-    path("quiz/<str:quiz_code>/", views.take_quiz, name="take_quiz"),
+    # More specific quiz patterns first
     path("quiz/<str:quiz_code>/scan/", views.quiz_scan, name="quiz_scan"),
     path("quiz/<str:quiz_code>/result/<int:submission_id>/", views.quiz_result, name="quiz_result"),
     path("quiz/<str:quiz_code>/qr/", views.quiz_qr_code, name="quiz_qr_code"),
+    # Generic quiz pattern last
+    path("quiz/<str:quiz_code>/", views.take_quiz, name="take_quiz"),
 
     path("logout/", views.app_logout, name="app_logout"),
 
