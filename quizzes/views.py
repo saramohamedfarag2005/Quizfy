@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
+from django.urls import reverse
 from .models import Quiz,Question,Submission,Answer,StudentProfile,SubjectFolder, QuizAttemptPermission
 from .forms import (
     TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm,ChangePasswordForm
@@ -256,9 +257,15 @@ def edit_quiz_settings(request, quiz_id):
     })
     
 @ensure_csrf_cookie
-@student_required
-@student_required
 def take_quiz(request, quiz_code):
+    # Check if user is authenticated and is a student
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('student_login')}?next={reverse('take_quiz', kwargs={'quiz_code': quiz_code})}")
+    
+    if not hasattr(request.user, "student_profile"):
+        messages.error(request, "You must be logged in as a student to take this quiz.")
+        return redirect("student_login")
+    
     quiz = get_object_or_404(Quiz, code=quiz_code.upper())
 
     # ✅ 1) Teacher stopped quiz OR due date passed

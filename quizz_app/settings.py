@@ -124,9 +124,5 @@ SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DEFAULT_FROM_EMAIL = "quizfyplatform@gmail.com"
 
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
-
-# Use SendGrid if available, otherwise use Gmail SMTP
-if SENDGRID_API_KEY:
-    EMAIL_BACKEND = "quizz_app.email_backends.SendGridEmailBackend"
-    DEFAULT_FROM_EMAIL = "quizfyplatform@gmail.com"
+# Always use Gmail SMTP for emails
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
