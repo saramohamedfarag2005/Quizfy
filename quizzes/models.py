@@ -115,6 +115,10 @@ class StudentProfile(models.Model):
         ("Jeddah", "Jeddah"),
         ("Dammam", "Dammam"),
         ("Al-Ahsa", "Al-Ahsa"),
+        ("Hail", "Hail"),
+        ("Madinah", "Madinah"),
+        
+        
     ]
 
     MAJOR_CHOICES = [
