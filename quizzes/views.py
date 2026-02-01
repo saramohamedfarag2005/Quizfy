@@ -61,21 +61,6 @@ def landing(request):
     """
     return render(request, "quizzes/landing.html")
 
-def quiz_scan(request, quiz_code):
-    """Handle QR code scan - redirect to quiz after checking if student is logged in."""
-    logger.info(f"quiz_scan called with quiz_code: {quiz_code}")
-    quiz_code = quiz_code.upper()
-    quiz = get_object_or_404(Quiz, code=quiz_code)
-    
-    # If student is logged in and has student profile, take them directly to the quiz
-    if request.user.is_authenticated and hasattr(request.user, "student_profile"):
-        logger.info("User is authenticated and has a student profile. Redirecting to quiz.")
-        return redirect("take_quiz", quiz_code=quiz_code)
-    
-    # If not logged in, redirect to student login
-    logger.info("User not authenticated. Redirecting to login.")
-    return redirect("student_login")
-
 
 @staff_required
 def quiz_qr_code(request, quiz_code):
@@ -83,10 +68,10 @@ def quiz_qr_code(request, quiz_code):
     quiz = get_object_or_404(Quiz, code=quiz_code.upper(), teacher=request.user)
     
     try:
-        # Build absolute URL for QR code (works when scanned on mobile)
+        # Build absolute URL for QR code (points directly to quiz, not scan endpoint)
         protocol = "https" if request.is_secure() else "http"
         domain = request.get_host()
-        qr_data = f"{protocol}://{domain}/quiz/{quiz.code}/scan/"
+        qr_data = f"{protocol}://{domain}/quiz/{quiz.code}/"
         
         qr = qrcode.QRCode(version=1, box_size=10, border=2)
         qr.add_data(qr_data)

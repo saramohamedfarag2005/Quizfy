@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
+from django.http import HttpResponse
 
 
 urlpatterns = [
@@ -10,7 +11,6 @@ urlpatterns = [
     path("teacher/help-bot/", views.teacher_help_bot, name="teacher_help_bot"),
 
     # More specific quiz patterns first
-    path("quiz/<str:quiz_code>/scan/", views.quiz_scan, name="quiz_scan"),
     path("quiz/<str:quiz_code>/result/<int:submission_id>/", views.quiz_result, name="quiz_result"),
     path("quiz/<str:quiz_code>/qr/", views.quiz_qr_code, name="quiz_qr_code"),
     # Generic quiz pattern last
@@ -123,6 +123,7 @@ path("change-password/", views.change_password, name="change_password"),
 path("change-password/done/", views.change_password_done, name="change_password_done"),
 
 path("debug/send-email/", views.test_send_email),
+path("debug/", lambda request: HttpResponse("Debug route is active"), name="debug"),
 
 
 
