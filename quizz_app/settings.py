@@ -109,7 +109,6 @@ LOGGING = {
     },
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -117,8 +116,10 @@ EMAIL_HOST_USER = "quizfyplatform@gmail.com"
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = 10
 
-# Debug: Use console backend if EMAIL_HOST_PASSWORD is not set
-if not EMAIL_HOST_PASSWORD:
+# Set email backend based on whether password is configured
+if EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # If you want password reset links to point to your Render domain
@@ -127,6 +128,3 @@ SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 DEFAULT_FROM_EMAIL = "quizfyplatform@gmail.com"
-
-# Always use Gmail SMTP for emails
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
