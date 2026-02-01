@@ -1,0 +1,157 @@
+PASSWORD RESET NOT WORKING - DIAGNOSTIC & SOLUTIONS
+==================================================
+
+IMMEDIATE QUESTIONS FOR YOU:
+============================
+
+1. When you try to reset your password on your Quizfy app:
+   - Do you see "Password reset email sent" message? (YES / NO)
+   - Do you receive ANY email at all?
+   - Do you get an error message? (If yes, what does it say?)
+
+2. Check Render logs:
+   - Go to Render Dashboard → your service → Logs
+   - After attempting password reset, scroll down
+   - Do you see "[EMAIL]" messages?
+   - Do you see "SMTP Error" or other errors?
+   - Take a screenshot of the actual error
+
+3. Gmail app password:
+   - Have you created a 16-character app password?
+   - Is it copied exactly without spaces?
+   - Did you paste it on Render as EMAIL_HOST_PASSWORD?
+
+4. Timing:
+   - How long did you wait between setting env var and testing?
+   - (Render needs 5-10 minutes to redeploy after adding env var)
+
+
+POSSIBLE ISSUES & SOLUTIONS:
+============================
+
+ISSUE #1: "Email Host Password not set" message in logs
+  CAUSE: Environment variable didn't save/propagate on Render
+  
+  FIX:
+  1. On Render, delete EMAIL_HOST_PASSWORD if it exists
+  2. Click "+ Add Environment Variable"
+  3. Name: EMAIL_HOST_PASSWORD
+  4. Value: abcdefghijklmnop (your 16-char app password)
+  5. Click "Add"
+  6. Wait 5-10 minutes for automatic redeploy
+  7. In Render Shell, run: echo $EMAIL_HOST_PASSWORD
+     (should show your password, not empty)
+
+
+ISSUE #2: "SMTP error: (535, Username and Password not accepted)"
+  CAUSE: Gmail authentication failed - wrong password or 2-Step not enabled
+  
+  FIX:
+  1. Go to https://myaccount.google.com/security
+  2. Check "2-Step Verification" - must be ON
+  3. Go to https://myaccount.google.com/apppasswords
+  4. Make sure you see "App passwords" option (only appears with 2-Step ON)
+  5. Delete your old app password
+  6. Generate a NEW app password for "Mail" + "Windows"
+  7. Copy the 16-character code (Gmail shows it in a popup)
+  8. On Render: Update EMAIL_HOST_PASSWORD with this new value
+  9. Wait 5 minutes for redeploy
+
+
+ISSUE #3: "Connection refused" or "Network unreachable"
+  CAUSE: Render can't reach Gmail servers
+  
+  FIX #1 - Most likely:
+  1. Try using a different email service instead (see ALTERNATIVE below)
+  
+  FIX #2 - Less likely:
+  1. Gmail might be blocking Render's IP
+  2. Check: https://accounts.google.com/device-activity
+  3. You might see "Sign-in attempt blocked" from Render's location
+  4. Click to allow it
+  5. Then try password reset again
+
+
+ISSUE #4: Email sends but user never receives it
+  CAUSE: Email configuration correct, but Gmail is still blocking
+  
+  FIX:
+  1. Test to yourself (use your own email address for reset)
+  2. Check SPAM folder first
+  3. Gmail settings → Forwarding → check nothing weird
+  4. Try an alternative email service (see ALTERNATIVE below)
+
+
+ALTERNATIVE SOLUTION: Use SendGrid Instead of Gmail
+====================================================
+
+Gmail SMTP has been unreliable. Consider using SendGrid (free tier):
+
+1. Go to https://sendgrid.com
+2. Sign up (free account with 100 emails/day)
+3. Get your API Key from dashboard
+4. On Render, set these environment variables:
+   SENDGRID_API_KEY = your_api_key_from_sendgrid
+   EMAIL_FROM_ADDRESS = noreply@yourdomain.com (or similar)
+
+5. Update Django settings to use SendGrid:
+
+   In quizz_app/settings.py, replace EMAIL section with:
+
+   ---
+   import os
+   
+   SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+   
+   if SENDGRID_API_KEY:
+       EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+   else:
+       EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+   
+   DEFAULT_FROM_EMAIL = os.getenv(
+       "EMAIL_FROM_ADDRESS", 
+       "noreply@quizfy.com"
+   )
+   ---
+
+6. Install sendgrid package:
+   pip install sendgrid-django
+
+7. Push to GitHub, Render auto-deploys
+
+Advantages of SendGrid:
+- More reliable than Gmail
+- Free tier (100 emails/day)
+- Better deliverability
+- Professional email service
+- No app password issues
+
+
+QUICK TEST ON RENDER (using Shell):
+====================================
+
+After you think it's fixed, run:
+
+python manage.py test_email
+
+Expected output:
+- EMAIL_BACKEND should show "DebugSMTPEmailBackend"
+- EMAIL_HOST_PASSWORD should show "SET"
+- Should end with "Test email sent successfully!"
+
+If it shows console backend instead, password isn't set yet.
+
+
+TELL ME:
+========
+
+Please answer these questions so I can diagnose your specific issue:
+
+1. What exact error/behavior are you seeing?
+2. Can you access Render Shell and check logs?
+3. What does Render show for EMAIL_HOST_PASSWORD env var?
+   (Go to Settings → Environment → EMAIL_HOST_PASSWORD)
+4. Have you waited at least 5 minutes since adding/changing the password?
+5. Did you create a fresh app password in Gmail, or using old one?
+
+Once you provide these details, I can give you specific next steps.
