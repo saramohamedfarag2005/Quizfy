@@ -9,3 +9,4 @@ Pillow
 qrcode[pil]
 openpyxl
 sendgrid==6.11.0
+sendgrid-django==4.2.0
