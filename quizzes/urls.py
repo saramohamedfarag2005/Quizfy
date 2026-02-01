@@ -10,6 +10,7 @@ urlpatterns = [
     path("teacher/help-bot/", views.teacher_help_bot, name="teacher_help_bot"),
 
     path("quiz/<str:quiz_code>/", views.take_quiz, name="take_quiz"),
+    path("quiz/<str:quiz_code>/scan/", views.quiz_scan, name="quiz_scan"),
     path("quiz/<str:quiz_code>/result/<int:submission_id>/", views.quiz_result, name="quiz_result"),
     path("quiz/<str:quiz_code>/qr/", views.quiz_qr_code, name="quiz_qr_code"),
 

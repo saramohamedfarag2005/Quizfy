@@ -58,14 +58,26 @@ def landing(request):
     """
     return render(request, "quizzes/landing.html")
 
+def quiz_scan(request, quiz_code):
+    """Handle QR code scan - redirect to quiz after checking if student is logged in."""
+    quiz = get_object_or_404(Quiz, code=quiz_code.upper())
+    
+    # If student is logged in, take them directly to the quiz
+    if request.user.is_authenticated and hasattr(request.user, "student_profile"):
+        return redirect("take_quiz", quiz_code=quiz_code)
+    
+    # If not logged in, redirect to student login with next parameter
+    return redirect(f"/student/login/?next=/quiz/{quiz_code}/")
+
+
 @staff_required
 def quiz_qr_code(request, quiz_code):
     """Generate and serve a QR code image for a quiz."""
     quiz = get_object_or_404(Quiz, code=quiz_code.upper(), teacher=request.user)
     
     try:
-        # Generate QR code pointing to quiz access page
-        qr_data = f"/quiz/{quiz.code}/"
+        # Generate QR code pointing to quiz scan endpoint
+        qr_data = f"/quiz/scan/{quiz.code}/"
         qr = qrcode.QRCode(version=1, box_size=10, border=2)
         qr.add_data(qr_data)
         qr.make(fit=True)
