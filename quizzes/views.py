@@ -86,7 +86,7 @@ def quiz_qr_code(request, quiz_code):
         # Build absolute URL for QR code (works when scanned on mobile)
         protocol = "https" if request.is_secure() else "http"
         domain = request.get_host()
-        qr_data = f"{protocol}://{domain}/quiz/scan/{quiz.code}/"
+        qr_data = f"{protocol}://{domain}/quiz/{quiz.code}/scan/"
         
         qr = qrcode.QRCode(version=1, box_size=10, border=2)
         qr.add_data(qr_data)
