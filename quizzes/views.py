@@ -71,10 +71,10 @@ def quiz_scan(request, quiz_code):
         logger.info("User is authenticated and has a student profile. Redirecting to quiz.")
         return redirect("take_quiz", quiz_code=quiz_code)
     
-    # If not logged in, redirect to student login with next parameter
-    next_url = f"/quiz/{quiz_code}/"
-    logger.info(f"User not authenticated. Redirecting to login with next: {next_url}")
-    return redirect(f"/student/login/?next={next_url}")
+    # If not logged in, redirect to student login
+    # The student_login view will redirect to student_dashboard after login
+    logger.info("User not authenticated. Redirecting to login.")
+    return redirect("student_login")
 
 
 @staff_required
@@ -255,6 +255,7 @@ def edit_quiz_settings(request, quiz_id):
     })
     
 @ensure_csrf_cookie
+@student_required
 @student_required
 def take_quiz(request, quiz_code):
     quiz = get_object_or_404(Quiz, code=quiz_code.upper())
