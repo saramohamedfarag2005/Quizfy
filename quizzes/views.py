@@ -59,9 +59,9 @@ def landing(request):
     return render(request, "quizzes/landing.html")
 
 @staff_required
-def quiz_qr_code(request, quiz_id):
+def quiz_qr_code(request, quiz_code):
     """Generate and serve a QR code image for a quiz."""
-    quiz = get_object_or_404(Quiz, id=quiz_id, teacher=request.user)
+    quiz = get_object_or_404(Quiz, code=quiz_code.upper(), teacher=request.user)
     
     try:
         # Generate QR code pointing to quiz access page
