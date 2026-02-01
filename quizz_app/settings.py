@@ -30,8 +30,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "quizzes",
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -101,11 +104,12 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "INFO",
+        "level": "DEBUG",
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        "django.core.mail": {"handlers": ["console"], "level": "DEBUG", "propagate": False},
     },
 }
 
@@ -118,9 +122,9 @@ EMAIL_TIMEOUT = 10
 
 # Set email backend based on whether password is configured
 if EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_BACKEND = "quizz_app.email_debug.DebugSMTPEmailBackend"
 else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_BACKEND = "quizz_app.email_debug.DebugConsoleEmailBackend"
 
 # If you want password reset links to point to your Render domain
 # (helps when generating absolute URLs in emails)
