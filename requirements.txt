@@ -6,5 +6,6 @@ dj-database-url
 psycopg2-binary
 
 Pillow
+qrcode[pil]
 openpyxl
 sendgrid==6.11.0
