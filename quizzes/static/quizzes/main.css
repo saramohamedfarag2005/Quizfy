@@ -522,10 +522,13 @@ html, body { overflow-x: hidden; }
   .actions{
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
   }
   .btn{
     width: 100%;
     justify-content: center;
+    padding: 12px 14px;
+    font-size: 14px;
   }
 
   /* Cards spacing */
@@ -533,10 +536,95 @@ html, body { overflow-x: hidden; }
     padding: 14px;
     border-radius: 16px;
   }
+
+  /* Mobile-friendly layout for row elements */
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .row > div {
+    width: 100%;
+  }
+
+  /* Form layout on mobile */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  form input, form select, form textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+
+  form button, form .btn {
+    width: 100%;
+    padding: 12px 14px;
+  }
+
+  /* Radio button labels - make them easy to tap */
+  label {
+    display: block;
+    padding: 10px 0;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  input[type="radio"], input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Quiz card layout */
+  .card > div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  h1 {
+    font-size: 26px;
+    margin: 14px 0;
+  }
+
+  h2 {
+    font-size: 16px;
+    margin: 12px 0 8px 0;
+  }
+
+  p {
+    font-size: 13px;
+  }
+
+  /* Ensure images in quizzes scale properly */
+  .card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
 }
 
 /* Small phones */
 @media (max-width: 420px){
-  h1{ font-size: 28px; }
+  h1{ font-size: 24px; }
   .brand{ font-size: 14px; }
+  
+  .btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .card {
+    padding: 12px;
+  }
+  
+  form input, form select, form textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
 }

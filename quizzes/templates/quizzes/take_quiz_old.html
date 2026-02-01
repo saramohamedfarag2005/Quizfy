@@ -2,11 +2,11 @@
 {% block title %}{{ quiz.title }}{% endblock %}
 
 {% block content %}
-<h1 style="margin-bottom: 12px;">{{ quiz.title }}</h1>
+<h1>{{ quiz.title }}</h1>
 
 {% if remaining_seconds != None %}
-  <div class="msg" id="timerBox" style="font-size: 14px; font-weight: 700;">
-    ⏱️ Time left: <span id="timerText"></span>
+  <div class="msg" id="timerBox">
+    Time left: <b id="timerText"></b>
   </div>
 {% endif %}
 
@@ -15,9 +15,9 @@
   <div class="quiz-stopped-card">
     <h2 style="margin:0 0 8px;">Quiz Closed</h2>
     <p style="margin:0 0 14px; opacity:.85;">
-      The teacher stopped this quiz. You can't continue.
+      The teacher stopped this quiz. You can’t continue.
     </p>
-    <a class="btn primary" href="{% url 'home' %}" style="display: inline-block; width: auto;">Back Home</a>
+    <a class="btn primary" href="{% url 'home' %}">Back Home</a>
   </div>
 </div>
 
@@ -26,34 +26,20 @@
 
   {% for q in questions %}
     <div class="card" style="margin-bottom: 14px;">
-      <p style="margin: 0 0 12px 0; font-weight: 700; font-size: 15px;"><b>Q{{ forloop.counter }}.</b> {{ q.text }}</p>
+      <p><b>Q{{ forloop.counter }}.</b> {{ q.text }}</p>
 
       {% if q.image %}
         <img src="{{ q.image.url }}" style="max-width: 100%; border-radius: 10px; margin: 10px 0;">
       {% endif %}
 
-      <div style="margin-top: 12px;">
-        <label style="display: block; padding: 8px 0; margin: 0; cursor: pointer;">
-          <input type="radio" name="question_{{ q.id }}" value="1" style="margin-right: 8px; cursor: pointer;"> 
-          <span>{{ q.option1 }}</span>
-        </label>
-        <label style="display: block; padding: 8px 0; margin: 0; cursor: pointer;">
-          <input type="radio" name="question_{{ q.id }}" value="2" style="margin-right: 8px; cursor: pointer;"> 
-          <span>{{ q.option2 }}</span>
-        </label>
-        <label style="display: block; padding: 8px 0; margin: 0; cursor: pointer;">
-          <input type="radio" name="question_{{ q.id }}" value="3" style="margin-right: 8px; cursor: pointer;"> 
-          <span>{{ q.option3 }}</span>
-        </label>
-        <label style="display: block; padding: 8px 0; margin: 0; cursor: pointer;">
-          <input type="radio" name="question_{{ q.id }}" value="4" style="margin-right: 8px; cursor: pointer;"> 
-          <span>{{ q.option4 }}</span>
-        </label>
-      </div>
+      <label><input type="radio" name="question_{{ q.id }}" value="1"> {{ q.option1 }}</label><br>
+      <label><input type="radio" name="question_{{ q.id }}" value="2"> {{ q.option2 }}</label><br>
+      <label><input type="radio" name="question_{{ q.id }}" value="3"> {{ q.option3 }}</label><br>
+      <label><input type="radio" name="question_{{ q.id }}" value="4"> {{ q.option4 }}</label><br>
     </div>
   {% endfor %}
 
-  <button id="submitBtn" class="btn primary" type="submit" style="width: 100%; padding: 14px; font-size: 16px; margin-top: 20px;">Submit Quiz</button>
+  <button id="submitBtn" class="btn" type="submit">Submit Quiz</button>
 </form>
 
 <style>
@@ -152,7 +138,7 @@
     }
 
     function tick(){
-      // if teacher stopped quiz, don't auto-submit
+      // if teacher stopped quiz, don’t auto-submit
       if (stopped) return;
 
       timerEl.textContent = fmt(remaining);

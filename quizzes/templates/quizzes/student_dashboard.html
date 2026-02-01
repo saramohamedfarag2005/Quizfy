@@ -6,7 +6,7 @@
   <div class="row">
     <div>
       <h1>Welcome, {{ profile.first_name }} 👋</h1>
-      <p style="margin-top: 8px;">
+      <p style="margin-top: 8px; font-size: 14px;">
         <b>ID:</b> {{ profile.university_id }} &nbsp; | &nbsp;
         <b>Major:</b> {{ profile.get_major_display }}
       </p>
@@ -20,11 +20,12 @@
 
 <div class="card" style="margin-bottom: 30px;">
   <h2>Enter Quiz Code</h2>
-  <form method="post" style="display: flex; gap: 12px; margin-top: 16px;">
+  <form method="post" style="margin-top: 16px;">
     {% csrf_token %}
-    <input type="text" name="quiz_code" placeholder="Enter quiz code..." class="quiz-code-input" style="flex: 1;">
+    <input type="text" name="quiz_code" placeholder="Enter quiz code..." class="quiz-code-input">
     <button class="btn primary" type="submit">Start Quiz</button>
   </form>
+  <p style="text-align: center; margin-top: 14px; font-size: 13px; color: var(--muted2);">Or scan a QR code with your phone</p>
 </div>
 
 <h2 style="margin-top: 30px; margin-bottom: 20px;">My Quiz History</h2>
@@ -37,8 +38,8 @@
 
 {% for s in submissions %}
   <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px;">
-      <div style="flex: 1;">
+    <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 200px;">
         <h3 style="margin: 0 0 10px 0; color: var(--text);">{{ s.quiz.title }}</h3>
         <p style="margin: 8px 0; font-size: 0.9rem;">
           <b>Score:</b> {{ s.score }} / {{ s.total }}

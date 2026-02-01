@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 import secrets
 from django.core.validators import RegexValidator
 from django.utils import timezone
+import qrcode
+from io import BytesIO
+import base64
 
 
 numeric_only=RegexValidator(
@@ -44,6 +47,19 @@ class Quiz(models.Model):
     def can_start(self):
         """Students can start only if teacher didn't stop it AND it's not expired."""
         return self.is_active and not self.is_expired()
+
+    def get_qr_code_base64(self):
+        """Generate a QR code that points to the quiz link."""
+        qr_data = f"https://quizfy.example.com/quiz/{self.code}/"
+        qr = qrcode.QRCode(version=1, box_size=10, border=2)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        buffer.seek(0)
+        img_base64 = base64.b64encode(buffer.read()).decode()
+        return f"data:image/png;base64,{img_base64}"
 
     def save(self, *args, **kwargs):
         """Auto-generate a code if missing."""
