@@ -1,0 +1,154 @@
+EMAIL PASSWORD RESET FIX - COMPREHENSIVE GUIDE
+=============================================
+
+PROBLEM:
+- Password reset emails are not being sent to users
+- The EMAIL_HOST_PASSWORD environment variable on Render is not correctly configured
+
+WHAT WE FIXED LOCALLY:
+✓ Removed duplicate EMAIL_BACKEND assignment in settings.py
+✓ Added Sites framework (django.contrib.sites) for proper domain in password reset emails
+✓ Created debug logging to email backend to show exactly what's happening
+✓ Created test_email management command to diagnose issues
+✓ All commits pushed to GitHub (Render auto-deploys)
+
+WHAT YOU NEED TO DO ON RENDER:
+================================
+
+STEP 1: Verify Email Host Password is Correct
+---------------------------------------------
+Your app password from Gmail should be:
+- 16 characters long (no spaces)
+- Created in Gmail account under "App passwords" (only if 2-Step Verification is ON)
+- NOT your regular Gmail password
+
+If you don't have an app password yet:
+1. Go to https://myaccount.google.com/security
+2. Check "2-Step Verification" is enabled (ON)
+3. Go to https://myaccount.google.com/apppasswords
+4. Select "Mail" and "Windows Computer" (or similar)
+5. Click "Generate"
+6. Copy the 16-character password shown (no spaces)
+
+
+STEP 2: Set Environment Variable on Render
+--------------------------------------------
+1. Go to your Render Dashboard
+2. Find your "quizz-app-scml" service (or your service name)
+3. Go to "Settings" or "Environment"
+4. Find the "EMAIL_HOST_PASSWORD" variable
+5. Delete the OLD value if it exists
+6. Click "+ Add Environment Variable"
+7. Name: EMAIL_HOST_PASSWORD
+8. Value: Paste the 16-character password from Gmail (no spaces!)
+9. Click "Save" or "Deploy"
+10. Wait for Render to redeploy (5-10 minutes)
+
+
+STEP 3: Test Email Functionality
+---------------------------------
+After Render redeploys:
+
+Option A - Using Render Console:
+1. Go to Render Dashboard → your service → Shell
+2. Run: python manage.py test_email
+3. Look for output like:
+   - EMAIL_BACKEND: quizz_app.email_debug.DebugSMTPEmailBackend
+   - EMAIL_HOST_PASSWORD: SET
+   - [OK] Sites configured
+   - [OK] Test email sent successfully!
+
+Option B - Test Password Reset on Live Site:
+1. Go to your Quizfy app on Render
+2. Click "Forgot Password"
+3. Enter an email address
+4. Click "Send Password Reset Email"
+5. Wait 10 seconds, check your email inbox and spam folder
+6. You should receive an email from: quizfyplatform@gmail.com
+
+
+STEP 4: Check Logs if Email Still Doesn't Work
+------------------------------------------------
+1. Go to Render Dashboard → your service → "Logs"
+2. Scroll down to find lines containing:
+   - [EMAIL] - These are our debug messages
+   - SMTP Error - If authentication failed
+   - Connection refused - If Gmail servers unreachable
+3. Check console output for full traceback
+
+Expected successful log lines:
+  [EMAIL] Attempting to send 1 message(s) via SMTP
+  [EMAIL] Subject: Password reset on Quizfy
+  [EMAIL] From: quizfyplatform@gmail.com
+  [EMAIL] To: ['user@example.com']
+  [EMAIL] Successfully sent 1 message(s)
+
+
+TROUBLESHOOTING:
+================
+
+"SMTP Error: (535, b'5.7.8 Username and Password not accepted'"
+→ The EMAIL_HOST_PASSWORD is WRONG or EMPTY
+→ Check Gmail 2-Step Verification is ON
+→ Create NEW app password (don't reuse old ones)
+→ Make sure there are NO SPACES in the password
+→ Set it on Render and redeploy
+
+"[EMAIL] EMAIL_BACKEND set to console (password not configured)"
+→ EMAIL_HOST_PASSWORD is not set on Render
+→ Go back to STEP 2 and add the environment variable
+→ Make sure the app redeploys after adding it
+
+"Connection timed out" or "Network unreachable"
+→ Render's outbound SMTP might be blocked
+→ Try adding Render's IP whitelist to Gmail (less common)
+→ Otherwise, contact Render support
+
+"Email sent but user doesn't receive it"
+→ Check user's SPAM/PROMOTIONS folder
+→ Verify user email address is correct in database
+→ Check if Gmail is blocking the email (forwarding issue)
+
+
+DATABASE NOTE:
+==============
+The database now has a Sites entry thanks to the migration.
+This is used to generate the correct domain in password reset links.
+The default Site should be: example.com (gets overridden by SITE_ID=1)
+
+If you need to change the domain on Render:
+1. Go to Render Shell
+2. Run: python manage.py shell
+3. Type:
+   from django.contrib.sites.models import Site
+   site = Site.objects.get(pk=1)
+   site.domain = "your-render-domain.onrender.com"
+   site.name = "Quizfy"
+   site.save()
+4. Type: exit()
+
+
+LOCAL TESTING:
+==============
+To test locally with console backend (doesn't send real emails):
+1. Make sure EMAIL_HOST_PASSWORD is NOT set
+2. Run: python manage.py test_email
+3. Emails print to console instead of sending
+4. This helps verify Django config without needing Gmail setup
+
+
+GMAIL ACCOUNT REQUIREMENTS:
+===========================
+- Account: quizfyplatform@gmail.com (as configured)
+- 2-Step Verification: MUST BE ENABLED
+- App Passwords: Must be created for password reset to work
+- Regular password: SHOULD NOT BE USED for SMTP
+- Recovery options: Should be set up for account security
+
+
+If password reset STILL doesn't work after all these steps:
+1. Try generating a NEW app password in Gmail
+2. Check Render logs for the specific error message
+3. Verify no typos in the EMAIL_HOST_PASSWORD value
+4. Make sure Render deployment completed (watch the deploy logs)
+5. Try accessing https://your-app.onrender.com/password-reset/ to test the page loads
