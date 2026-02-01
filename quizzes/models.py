@@ -49,8 +49,11 @@ class Quiz(models.Model):
         return self.is_active and not self.is_expired()
 
     def get_qr_code_base64(self):
-        """Generate a QR code that points to the quiz link."""
-        qr_data = f"https://quizfy.example.com/quiz/{self.code}/"
+        """Generate a QR code that points to the quiz link.
+        Students must be logged in to access the quiz directly via code.
+        """
+        # Use a proper quiz URL - students will be prompted to login if not authenticated
+        qr_data = f"/quiz/{self.code}/"
         qr = qrcode.QRCode(version=1, box_size=10, border=2)
         qr.add_data(qr_data)
         qr.make(fit=True)
