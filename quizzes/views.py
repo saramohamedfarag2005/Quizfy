@@ -60,16 +60,15 @@ def landing(request):
 
 def quiz_scan(request, quiz_code):
     """Handle QR code scan - redirect to quiz after checking if student is logged in."""
-    quiz = get_object_or_404(Quiz, code=quiz_code.upper())
+    quiz_code = quiz_code.upper()
+    quiz = get_object_or_404(Quiz, code=quiz_code)
     
     # If student is logged in, take them directly to the quiz
     if request.user.is_authenticated and hasattr(request.user, "student_profile"):
         return redirect("take_quiz", quiz_code=quiz_code)
     
     # If not logged in, redirect to student login with next parameter
-    # Use the quiz take_quiz URL as the next destination
-    from django.urls import reverse
-    next_url = reverse("take_quiz", kwargs={"quiz_code": quiz_code})
+    next_url = f"/quiz/{quiz_code}/"
     return redirect(f"/student/login/?next={next_url}")
 
 
