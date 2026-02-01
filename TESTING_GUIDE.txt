@@ -1,0 +1,141 @@
+========================================
+TESTING GUIDE - PASSWORD CHANGE FEATURE
+========================================
+
+QUICK TEST STEPS:
+=================
+
+1. START THE APPLICATION
+   python manage.py runserver
+
+2. LOGIN AS A STUDENT
+   - Visit: http://127.0.0.1:8000/student/login/
+   - Use existing credentials OR create test account
+   - You'll be redirected to student dashboard
+
+3. TEST PASSWORD CHANGE
+   - On dashboard, click "Change Password" button
+   - You should see form with 3 fields:
+     * Current Password
+     * New Password
+     * Confirm New Password
+   - Leave any field blank and try submit → should show "This field is required"
+   - Enter wrong current password → should see "Your old password was entered incorrectly"
+   - Enter mismatched new passwords → should see "The two password fields didn't match"
+   - Enter correct old password and matching new passwords → should submit successfully
+
+4. VERIFY SUCCESS PAGE
+   - After valid submission, see success page with checkmark
+   - Click "Student Login" link
+   - Login with NEW password (old one should fail now)
+
+5. TEST AS TEACHER
+   - Logout
+   - Login as teacher: http://127.0.0.1:8000/teacher/login/
+   - Go to "My Subjects" page
+   - Click "Change Password" button
+   - Repeat same validation tests
+   - After success, click "Teacher Login" and verify new password works
+
+EDGE CASES TO TEST:
+===================
+
+1. Access without login:
+   - Visit: http://127.0.0.1:8000/change-password/ without logging in
+   - Should redirect to login page
+
+2. Success page without coming from change password:
+   - Visit: http://127.0.0.1:8000/change-password/done/ without logging in
+   - Should redirect to login page
+
+3. User types spaces in password:
+   - Spaces are allowed and preserved in password
+   - "pass word" is different from "password"
+
+4. Very long passwords:
+   - Django allows up to ~128 characters typically
+   - Try passwords with 50+ characters
+
+5. Special characters:
+   - Passwords with !@#$%^&*()_+-=[]{}|;:,.<>? should work fine
+
+API ENDPOINTS:
+==============
+
+GET  /change-password/           → Display change password form
+POST /change-password/           → Process password change
+GET  /change-password/done/      → Show success confirmation
+
+FORM VALIDATION ORDER:
+======================
+
+1. old_password:
+   - Checked against request.user.check_password()
+   - Must be exact match
+
+2. new_password1 vs new_password2:
+   - Must be identical strings
+   - Checked in clean_new_password2()
+
+3. Form save:
+   - Calls user.set_password() for hashing
+   - Calls user.save() to persist to database
+
+EXPECTED DATABASE CHANGES:
+==========================
+
+When password is successfully changed:
+- auth_user.password field is updated with new hashed password
+- No audit log (unless you add logging separately)
+- Old password becomes invalid immediately
+
+EXPECTED USER FLOW:
+===================
+
+1. User on dashboard/quizzes page
+2. Clicks "Change Password" button
+3. Redirected to: /change-password/
+4. Form displays with 3 password fields
+5. User fills and submits form
+6. On valid submission:
+   - Django validates & saves password
+   - Shows success message
+   - Redirects to: /change-password/done/
+7. Success page shows with link to login
+8. User must log in again with new password
+
+SECURITY NOTES:
+===============
+
+✓ Views protected with @login_required decorator
+✓ Old password verified before allowing change
+✓ Passwords hashed with Django's default algorithm
+✓ CSRF token in form
+✓ Form validates data on both client and server
+
+⚠ Not implemented but possible additions:
+  - Email notification of password change
+  - Token-based email verification before password change
+  - Activity log of password changes
+  - 2FA/MFA support
+  - Password strength meter
+
+TROUBLESHOOTING:
+================
+
+If password change form doesn't appear:
+- Verify user is logged in
+- Check that {% url 'change_password' %} resolves in Django
+- Check browser console for JavaScript errors
+
+If redirect loop occurs:
+- Ensure @login_required decorator is on views
+- Check that LOGIN_URL is properly configured in settings
+- Clear browser cache/cookies
+
+If password still works after change:
+- Verify form.save() is being called
+- Check database: auth_user.password field should have changed hash
+- Restart Django development server
+
+========================================

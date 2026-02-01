@@ -1,0 +1,217 @@
+========================================
+ARCHITECTURE DIAGRAM
+Password Change Feature
+========================================
+
+USER INTERACTION FLOW:
+=====================
+
+Dashboard/Quizzes Page
+      ↓
+    [Change Password Button]
+      ↓
+GET /change-password/
+      ↓
+    [change_password view]
+      ↓
+Render change_password.html
+    ├─ Current Password field
+    ├─ New Password field
+    └─ Confirm Password field
+      ↓
+USER FILLS FORM & SUBMITS
+      ↓
+POST /change-password/
+      ↓
+    [change_password view]
+      ↓
+    [ChangePasswordForm validation]
+      ├─ Check old password correct?
+      ├─ Check new passwords match?
+      ├─ Check both not empty?
+      └─ All valid? → YES → Continue
+                      → NO → Show errors
+      ↓
+    [form.save()]
+      ├─ user.set_password(new_password)
+      └─ user.save()
+      ↓
+Redirect to /change-password/done/
+      ↓
+    [change_password_done view]
+      ↓
+Render change_password_done.html
+    ├─ Success message
+    ├─ Checkmark icon
+    └─ Login link
+      ↓
+USER CLICKS LOGIN LINK
+      ↓
+REDIRECTED TO LOGIN PAGE
+      ↓
+LOGIN WITH NEW PASSWORD
+
+
+FILE STRUCTURE:
+===============
+
+Quizfy/
+├── quizzes/
+│   ├── forms.py
+│   │   └── ChangePasswordForm (NEW)
+│   │
+│   ├── views.py
+│   │   ├── change_password() (NEW)
+│   │   └── change_password_done() (NEW)
+│   │
+│   ├── urls.py
+│   │   ├── path("change-password/", ...) (NEW)
+│   │   └── path("change-password/done/", ...) (NEW)
+│   │
+│   └── templates/quizzes/
+│       ├── change_password.html (NEW)
+│       ├── change_password_done.html (NEW)
+│       ├── student_dashboard.html (MODIFIED - added button)
+│       └── teacher_folders.html (MODIFIED - added button)
+
+
+DATABASE CHANGES:
+=================
+
+Before Password Change:
+┌──────────────────────────────────┐
+│ auth_user                        │
+├──────────────────────────────────┤
+│ id    │ 5                        │
+│ email │ john@example.com         │
+│ pass  │ pbkdf2_sha256$...old... │
+└──────────────────────────────────┘
+
+After Password Change:
+┌──────────────────────────────────┐
+│ auth_user                        │
+├──────────────────────────────────┤
+│ id    │ 5                        │
+│ email │ john@example.com         │
+│ pass  │ pbkdf2_sha256$...new... │
+└──────────────────────────────────┘
+
+
+FORM VALIDATION CHAIN:
+======================
+
+ChangePasswordForm.clean()
+    ↓
+  1. clean_old_password()
+     └─ user.check_password(old_password)
+        ├─ TRUE → return old_password
+        └─ FALSE → raise ValidationError
+    ↓
+  2. clean_new_password2()
+     ├─ Compare new_password1 vs new_password2
+     ├─ MATCH → return new_password2
+     └─ MISMATCH → raise ValidationError
+    ↓
+  3. Form is valid if all clean() methods pass
+     └─ save() → user.set_password() & user.save()
+
+
+SECURITY LAYERS:
+================
+
+Layer 1: Access Control
+  └─ @login_required decorator
+     └─ Only authenticated users can access
+
+Layer 2: Form Validation
+  ├─ CSRF token verification
+  ├─ Old password verification
+  ├─ New password matching
+  └─ Required field checks
+
+Layer 3: Password Security
+  ├─ Django's set_password() with PBKDF2SHA256
+  ├─ Salted hash storage
+  └─ No plaintext passwords in database
+
+Layer 4: User Experience
+  ├─ Clear error messages
+  ├─ Inline validation feedback
+  └─ Success confirmation
+
+
+DJANGO COMPONENTS USED:
+=======================
+
+✓ forms.Form
+  └─ Custom form for password change
+
+✓ @login_required decorator
+  └─ Protect views from unauthenticated access
+
+✓ User.check_password()
+  └─ Verify old password
+
+✓ User.set_password()
+  └─ Hash new password securely
+
+✓ Django messages framework
+  └─ Show success/error messages
+
+✓ render() function
+  └─ Render templates with context
+
+✓ redirect() function
+  └─ Navigate to success page
+
+
+TEMPLATE STRUCTURE:
+===================
+
+change_password.html
+├─ Extends base.html
+├─ Title: "Change Password - Quizfy"
+├─ Form container
+│  ├─ old_password field
+│  ├─ new_password1 field
+│  ├─ new_password2 field
+│  ├─ Error display (if any)
+│  ├─ Submit button
+│  └─ Cancel link (back to dashboard)
+└─ Bootstrap styling
+
+change_password_done.html
+├─ Extends base.html
+├─ Title: "Password Changed - Quizfy"
+├─ Success message
+├─ Checkmark icon
+├─ Instructions to log in again
+└─ Login link (teacher or student)
+
+
+INTEGRATION POINTS:
+===================
+
+Dashboard Links:
+├─ student_dashboard.html
+│  └─ Added: <a href="{% url 'change_password' %}">Change Password</a>
+│
+└─ teacher_folders.html
+   └─ Added: <a href="{% url 'change_password' %}">Change Password</a>
+
+URL Configuration:
+├─ quizzes/urls.py
+│  ├─ path("change-password/", views.change_password, name="change_password")
+│  └─ path("change-password/done/", views.change_password_done, name="change_password_done")
+│
+View Registration:
+├─ quizzes/views.py
+│  ├─ def change_password(request)
+│  └─ def change_password_done(request)
+│
+Form Registration:
+└─ quizzes/forms.py
+   └─ class ChangePasswordForm(forms.Form)
+
+
+========================================

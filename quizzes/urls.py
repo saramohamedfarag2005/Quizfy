@@ -112,6 +112,11 @@ path(
     ),
     name="password_reset_complete",
 ),
+
+# Password change for logged-in users
+path("change-password/", views.change_password, name="change_password"),
+path("change-password/done/", views.change_password_done, name="change_password_done"),
+
 path("debug/send-email/", views.test_send_email),
 
 

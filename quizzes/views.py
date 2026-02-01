@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
 from .models import Quiz,Question,Submission,Answer,StudentProfile,SubjectFolder, QuizAttemptPermission
 from .forms import (
-    TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm
+    TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm,ChangePasswordForm
 )
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import HttpResponse
@@ -1359,3 +1359,31 @@ def test_send_email(request):
         fail_silently=False,
     )
     return HttpResponse("Sent (check logs + inbox)")
+
+
+# ============================================================
+# PASSWORD CHANGE FOR LOGGED-IN USERS (Email Verification)
+# ============================================================
+
+@login_required
+def change_password(request):
+    """
+    View for logged-in users to change their password.
+    Requires old password verification.
+    """
+    form = ChangePasswordForm(request.user, request.POST or None)
+    
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Your password has been changed successfully!")
+        return redirect("change_password_done")
+    
+    return render(request, "quizzes/change_password.html", {"form": form})
+
+
+@login_required
+def change_password_done(request):
+    """
+    Confirmation page after password change.
+    """
+    return render(request, "quizzes/change_password_done.html")

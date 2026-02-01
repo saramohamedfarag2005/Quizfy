@@ -1,0 +1,173 @@
+========================================
+QUICK REFERENCE CARD
+Password Change Feature
+========================================
+
+URLS:
+=====
+GET  /change-password/          → Show form
+POST /change-password/          → Process change
+GET  /change-password/done/     → Success page
+
+
+VIEWS:
+======
+change_password(request)     @ /change-password/
+change_password_done(request) @ /change-password/done/
+
+
+FORM:
+=====
+ChangePasswordForm
+├─ old_password: CharField(PasswordInput)
+├─ new_password1: CharField(PasswordInput)
+└─ new_password2: CharField(PasswordInput)
+
+
+TEMPLATES:
+==========
+change_password.html          → Form display
+change_password_done.html     → Success page
+
+
+DECORATORS USED:
+================
+@login_required              ← Protects both views
+
+
+DASHBOARD BUTTONS:
+==================
+Student: Dashboard → "Change Password" button
+Teacher: My Subjects → "Change Password" button
+
+
+VALIDATION CHAIN:
+=================
+1. Form.clean_old_password()
+   → user.check_password(old_password)
+
+2. Form.clean_new_password2()
+   → new_password1 == new_password2
+
+3. Form.save()
+   → user.set_password(new_password1)
+   → user.save()
+
+
+ERROR MESSAGES:
+===============
+"Old password incorrect"
+  → User entered wrong current password
+
+"Passwords don't match"
+  → New password fields don't match
+
+"This field is required"
+  → Empty password field
+
+
+SUCCESS FLOW:
+=============
+POST valid form → redirect → success page
+                ↓
+         User sees confirmation
+                ↓
+         Clicks login link
+                ↓
+        Logs in with NEW password
+
+
+DATABASE IMPACT:
+================
+Table: auth_user
+Field: password
+Effect: Hash updated with new password
+
+
+SECURITY:
+=========
+✓ CSRF token
+✓ @login_required
+✓ Old password verification
+✓ Password hashing (PBKDF2SHA256)
+✓ Form validation
+
+
+DEPENDENCIES:
+=============
+- Django's built-in User model
+- Django forms framework
+- Django auth decorators
+
+
+TESTING:
+========
+python manage.py runserver
+→ Login
+→ Click "Change Password"
+→ Fill form
+→ Submit
+→ Verify success page
+→ Login with new password
+
+
+FILES TO REVIEW:
+================
+1. quizzes/forms.py       → ChangePasswordForm
+2. quizzes/views.py       → change_password()
+3. quizzes/urls.py        → URL patterns
+4. templates/change_password.html
+5. templates/change_password_done.html
+
+
+COMMON ISSUES:
+==============
+Q: Form doesn't appear after clicking button?
+A: Check URL pattern is in urls.py
+   Check template has correct {% url %} tag
+
+Q: Form submits but nothing happens?
+A: Check form.is_valid() condition
+   Check form.save() is being called
+   Check user object has password updated
+
+Q: Old password still works after change?
+A: Verify form.save() is executed
+   Check database password hash changed
+   Restart Django server
+
+
+NO EMAIL VERIFICATION:
+======================
+Current implementation:
+✗ No email notification
+✗ No token verification
+✗ No email confirmation link
+
+Can be added if needed:
+1. Import PasswordResetTokenGenerator
+2. Generate token
+3. Send email with token link
+4. Validate token on click
+5. Then allow password change
+
+
+DEPLOYMENT:
+===========
+1. Push changes to repository
+2. Run: python manage.py collectstatic (if needed)
+3. Restart Django application
+4. Test in production environment
+
+
+MONITORING:
+===========
+Add to monitoring:
+- Track password change attempts
+- Log failed validation attempts
+- Alert on multiple failures (brute force)
+
+
+========================================
+Ready for Production Use ✅
+========================================

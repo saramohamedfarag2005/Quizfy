@@ -194,3 +194,60 @@ class StudentLoginForm(AuthenticationForm):
                 return user.username
 
         return identifier
+
+
+# ============================================================
+# PASSWORD RESET FOR LOGGED-IN USERS
+# ============================================================
+
+class ChangePasswordForm(forms.Form):
+    """Form for logged-in users to change their password"""
+    old_password = forms.CharField(
+        label="Current Password",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter your current password",
+            "autocomplete": "current-password",
+        })
+    )
+    new_password1 = forms.CharField(
+        label="New Password",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Enter new password",
+            "autocomplete": "new-password",
+        })
+    )
+    new_password2 = forms.CharField(
+        label="Confirm New Password",
+        widget=forms.PasswordInput(attrs={
+            "class": "form-control",
+            "placeholder": "Confirm new password",
+            "autocomplete": "new-password",
+        })
+    )
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_old_password(self):
+        old_password = self.cleaned_data.get("old_password")
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError("Your old password was entered incorrectly. Please try again.")
+        return old_password
+
+    def clean_new_password2(self):
+        new_password1 = self.cleaned_data.get("new_password1")
+        new_password2 = self.cleaned_data.get("new_password2")
+        
+        if new_password1 and new_password2:
+            if new_password1 != new_password2:
+                raise forms.ValidationError("The two password fields didn't match.")
+        
+        return new_password2
+
+    def save(self):
+        self.user.set_password(self.cleaned_data["new_password1"])
+        self.user.save()
+        return self.user

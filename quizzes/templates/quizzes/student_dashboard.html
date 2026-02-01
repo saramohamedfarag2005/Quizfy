@@ -10,7 +10,10 @@
       <b>Major:</b> {{ profile.get_major_display }}
     </p>
   </div>
-  <a class="btn danger" href="{% url 'app_logout' %}">Logout</a>
+  <div class="actions">
+    <a class="btn secondary" href="{% url 'change_password' %}">Change Password</a>
+    <a class="btn danger" href="{% url 'app_logout' %}">Logout</a>
+  </div>
 </div>
 
 <div class="card">
