@@ -1,0 +1,133 @@
+IMMEDIATE ACTION STEPS - PASSWORD RESET FIX
+============================================
+
+You've already done the configuration steps but email still doesn't work.
+This means we need to diagnose what's actually happening on Render.
+
+⚠️ DO THIS NOW:
+===============
+
+STEP 1: Check Email Diagnostic Page
+------------------------------------
+1. Go to your live Quizfy app on Render
+2. Add this to the URL: /email-diagnostic/
+   Example: https://your-app.onrender.com/email-diagnostic/
+
+3. This shows you:
+   - What EMAIL_BACKEND Django is using
+   - If EMAIL_HOST_PASSWORD is SET or EMPTY
+   - Test email send result (success or specific error)
+   - Sites configuration
+   - EVERYTHING needed to diagnose
+
+4. Screenshot this page and share the output with me
+
+STEP 2: Check Render Environment Variable
+-------------------------------------------
+1. Go to Render Dashboard
+2. Click your service
+3. Go to Settings → Environment Variables
+4. Find EMAIL_HOST_PASSWORD
+5. Confirm it's there and has a value
+6. If empty or missing, that's the problem
+7. If it exists, click "Copy" to verify it
+
+STEP 3: Based on Diagnostic Results
+-------------------------------------
+
+IF EMAIL_HOST_PASSWORD shows "SET = false":
+  → The environment variable is NOT set on Render
+  → Fix: Add it again in Settings → Environment → "+ Add Variable"
+  → Wait 5-10 minutes for redeploy
+  → Then test again
+
+IF EMAIL_HOST_PASSWORD shows "SET = true" but TEST_EMAIL_RESULT has error:
+  → The password might be wrong OR Gmail is blocking
+  → Error message will tell us exactly what's wrong
+  → Common errors:
+     - "(535, Username and Password not accepted)" = Wrong password
+     - "Connection refused" = Gmail blocking Render IP
+     - "Network unreachable" = Connectivity issue
+
+IF TEST_EMAIL_RESULT says "Success":
+  → Email is working! Problem might be somewhere else
+  → Check if email is going to spam folder
+  → Test with your own email address
+
+
+ALTERNATIVE IF GMAIL ISN'T WORKING:
+===================================
+
+If the diagnostic shows Gmail authentication failures, we should switch to SendGrid.
+
+SendGrid is free and more reliable:
+
+STEP A: Get SendGrid
+1. Go to https://sendgrid.com
+2. Click "Start for free"
+3. Sign up (it's truly free for 100 emails/day)
+4. After signup, go to Settings → API Keys
+5. Click "Create API Key"
+6. Give it any name (e.g., "Quizfy")
+7. Copy the key (you'll only see it once!)
+
+STEP B: Add to Render
+1. Render Dashboard → Your Service → Settings → Environment
+2. Click "+ Add Environment Variable"
+   Name: SENDGRID_API_KEY
+   Value: (paste the key from SendGrid)
+3. Click "Add"
+4. Click "+ Add Environment Variable" again
+   Name: EMAIL_FROM_ADDRESS
+   Value: noreply@quizfy.com (or any address)
+5. Click "Add"
+6. Wait 5 minutes for redeploy
+
+STEP C: Update Django Config
+The code changes will be pushed to switch from Gmail to SendGrid.
+(I'll make these changes if you confirm SendGrid is needed)
+
+STEP D: Test
+Go to /email-diagnostic/ again
+EMAIL_BACKEND should now show "sendgrid"
+Test email should work
+
+
+WHAT TO TELL ME:
+================
+
+After checking /email-diagnostic/ page, tell me:
+
+1. What does EMAIL_HOST_PASSWORD show? (SET or NOT SET?)
+2. What is the TEST_EMAIL_RESULT? (Success or what error?)
+3. What EMAIL_BACKEND is being used?
+4. Did you wait at least 5 minutes after adding env var?
+5. Is the issue specific to password reset, or ALL emails?
+
+With this info, I can give you exact next steps.
+
+
+WORST CASE:
+===========
+
+If Gmail truly doesn't work and SendGrid setup is too complex:
+- I can set up a free email service (MailerSend, Resend, etc.)
+- Or provide a direct SMTP configuration
+- Or implement a different password reset method
+
+But first, let's check the diagnostic endpoint.
+That will tell us exactly what's happening.
+
+
+YOU SHOULD HAVE NOW:
+===================
+
+✓ Email configuration code (Django)
+✓ Debug logging (shows all email activity)
+✓ Test command (python manage.py test_email)
+✓ Diagnostic endpoint (/email-diagnostic/)
+✓ Complete troubleshooting guide (this file)
+✓ Alternative solutions (SendGrid ready to implement)
+
+Everything is in place. We just need to see what's actually happening.
+Check /email-diagnostic/ and tell me what you see.
