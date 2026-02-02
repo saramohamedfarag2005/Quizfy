@@ -69,10 +69,10 @@ def quiz_qr_code(request, quiz_code):
     quiz = get_object_or_404(Quiz, code=quiz_code.upper(), teacher=request.user)
     
     try:
-        # Build absolute URL for QR code (points directly to quiz, not scan endpoint)
+        # Build absolute URL for QR code (points to scan redirect endpoint)
         protocol = "https" if request.is_secure() else "http"
         domain = request.get_host()
-        qr_data = f"{protocol}://{domain}/quiz/{quiz.code}/"
+        qr_data = f"{protocol}://{domain}/quiz/{quiz.code}/scan/"
         
         qr = qrcode.QRCode(version=1, box_size=10, border=2)
         qr.add_data(qr_data)
@@ -239,13 +239,36 @@ def edit_quiz_settings(request, quiz_id):
         "quiz": quiz,
         "form": form
     })
+
+
+def quiz_scan_redirect(request, quiz_code):
+    """
+    Endpoint specifically for QR code scanning.
+    Checks authentication and redirects to login if needed,
+    then to the quiz with proper next parameter.
+    """
+    if not request.user.is_authenticated:
+        # User not logged in - redirect to login with next parameter
+        from django.urls import reverse
+        next_url = reverse('take_quiz', kwargs={'quiz_code': quiz_code})
+        return redirect(f"/student/login/?next={next_url}")
     
+    # User is logged in - check if they're a student
+    if not hasattr(request.user, "student_profile"):
+        messages.error(request, "Only students can take quizzes.")
+        return redirect("student_dashboard")
+    
+    # Redirect to the actual quiz
+    return redirect('take_quiz', quiz_code=quiz_code)
+
 @ensure_csrf_cookie
 def take_quiz(request, quiz_code):
     # Check if user is authenticated and is a student
     if not request.user.is_authenticated:
-        messages.error(request, "You must be logged in as a student to take this quiz.")
-        return redirect("student_login")
+        # Redirect to login with next parameter pointing back to this quiz
+        from django.urls import reverse
+        next_url = reverse('take_quiz', kwargs={'quiz_code': quiz_code})
+        return redirect(f"/student/login/?next={next_url}")
     
     if not hasattr(request.user, "student_profile"):
         messages.error(request, "Only students can take quizzes.")
