@@ -2,7 +2,7 @@
 Custom SendGrid email backend with debug logging
 """
 import logging
-from sendgrid_backend.backend import SendgridBackend as OriginalSendgridBackend
+from sendgrid_backend import SendgridBackend as OriginalSendgridBackend
 
 logger = logging.getLogger(__name__)
 
