@@ -122,8 +122,6 @@ if SENDGRID_API_KEY:
 else:
     # Fallback to console if no SendGrid key configured
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-else:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # For password reset email domain
 SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000")
