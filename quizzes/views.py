@@ -1,54 +1,175 @@
-from django.shortcuts import render,redirect,get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.contrib.auth import authenticate,login,logout
+"""
+=============================================================================
+Quizfy Views
+=============================================================================
+
+This module contains all view functions for the Quizfy quiz platform.
+
+View Categories:
+----------------
+PUBLIC VIEWS:
+    - home()                    : Home page with role-based redirect
+    - landing()                 : Marketing landing page
+
+QUIZ TAKING VIEWS:
+    - take_quiz()               : Student quiz-taking interface
+    - quiz_join()               : QR code join page
+    - quiz_scan_redirect()      : Handle QR scan authentication
+    - quiz_result()             : Show quiz results to student
+    - quiz_status()             : AJAX endpoint for quiz status
+    - quiz_qr_code()            : Generate QR code image
+
+TEACHER AUTHENTICATION:
+    - teacher_signup()          : Register teacher account
+    - teacher_login()           : Teacher login page
+    - teacher_logout()          : Logout teacher
+
+TEACHER QUIZ MANAGEMENT:
+    - teacher_quizzes()         : Teacher dashboard (folders + quizzes)
+    - create_quiz()             : Create new quiz
+    - teacher_quiz_detail()     : View quiz details
+    - delete_quiz()             : Delete a quiz
+    - toggle_quiz_active()      : Start/stop quiz
+    - edit_quiz_settings()      : Edit timer, due date, etc.
+    - move_quiz()               : Move quiz to folder
+
+TEACHER QUESTION MANAGEMENT:
+    - create_question()         : Add question to quiz
+    - edit_question()           : Edit existing question
+    - delete_question()         : Delete question
+
+TEACHER SUBMISSION MANAGEMENT:
+    - quiz_submissions()        : List all submissions for a quiz
+    - grade_submission()        : Grade student's submission
+    - allow_extra_attempt()     : Give student extra attempt
+    - adjust_attempts()         : Adjust attempt count (+/-)
+    - delete_teacher_file()     : Remove teacher feedback file
+
+TEACHER FOLDER MANAGEMENT:
+    - create_folder()           : Create subject folder
+    - folder_detail()           : View folder contents
+    - folder_analytics()        : AI-powered analytics
+    - delete_folder()           : Delete folder
+
+TEACHER EXPORT FUNCTIONS:
+    - export_submissions_excel(): Export quiz submissions
+    - export_folder_boxes_excel(): Export folder boxes report
+    - export_student_folder_excel(): Export student report
+
+STUDENT VIEWS:
+    - student_signup()          : Register student account
+    - student_login()           : Student login page
+    - student_dashboard()       : Student dashboard
+    - student_submission_detail(): View submission details
+    - enter_quiz()              : Enter quiz code form
+
+PASSWORD MANAGEMENT:
+    - change_password()         : Change password form
+    - change_password_done()    : Password change success
+
+UTILITY VIEWS:
+    - teacher_help_bot()        : AI help assistant
+    - email_diagnostic()        : Email config debug
+    - send_test_email()         : Test email sending
+    - app_logout()              : Universal logout
+
+Author: Quizfy Team
+=============================================================================
+"""
+
+# =============================================================================
+# IMPORTS
+# =============================================================================
+
+# Django core imports
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
 from django.urls import reverse
-from .models import Quiz,Question,Submission,Answer,StudentProfile,SubjectFolder, QuizAttemptPermission, FileSubmission
-from .forms import (
-    TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm,ChangePasswordForm,TrueFalseQuestionForm,FileUploadSubmissionForm,FileUploadQuestionForm
-)
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.http import HttpResponse
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-import json
-import difflib
-import re
 from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+
+# Third-party imports
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
-from django.core.mail import send_mail
-from django.contrib import messages
-from django.shortcuts import redirect
-from django.conf import settings
-from django.contrib.admin.views.decorators import staff_member_required
 import qrcode
 from io import BytesIO
+
+# Python standard library
+import json
+import difflib
+import re
 import logging
+
+# Local imports
+from .models import (
+    Quiz, Question, Submission, Answer, 
+    StudentProfile, SubjectFolder, QuizAttemptPermission, FileSubmission
+)
+from .forms import (
+    TeacherLoginForm, TeacherSignupForm, QuizForm, QuestionForm,
+    EnterQuizForm, StudentSignupForm, StudentLoginForm, FolderForm,
+    MoveQuizForm, QuizSettingsForm, ChangePasswordForm,
+    TrueFalseQuestionForm, FileUploadSubmissionForm, FileUploadQuestionForm
+)
+
+
+# =============================================================================
+# LOGGING SETUP
+# =============================================================================
 
 logger = logging.getLogger(__name__)
 
+
+# =============================================================================
+# AUTHENTICATION DECORATORS
+# =============================================================================
+
 def student_required(view_func):
+    """
+    Decorator that restricts access to authenticated students only.
+    Redirects to student login if not authenticated or not a student.
+    """
     return user_passes_test(
         lambda u: u.is_authenticated and not u.is_staff and hasattr(u, "student_profile"),
         login_url="/student/login/"
     )(view_func)
 
+
 def staff_required(view_func):
+    """
+    Decorator that restricts access to staff (teachers) only.
+    Redirects to teacher login if not authenticated or not staff.
+    """
     return user_passes_test(
         lambda u: u.is_authenticated and u.is_staff,
         login_url="/teacher/login/"
     )(view_func)
 
 
+# =============================================================================
+# PUBLIC VIEWS
+# =============================================================================
+
 def home(request):
+    """
+    Home page view with role-based redirects.
+    
+    - Authenticated teachers → Teacher dashboard
+    - Authenticated students → Student dashboard  
+    - Anonymous users → Landing page
+    """
     if request.user.is_authenticated:
         if request.user.is_staff:
             return redirect("teacher_quizzes")
@@ -57,15 +178,25 @@ def home(request):
 
 
 def landing(request):
-    """Render the public landing page without redirecting authenticated users.
+    """
+    Render the public landing page without redirecting authenticated users.
     This lets the logo/home link always go to the marketing landing page.
     """
     return render(request, "quizzes/landing.html")
 
 
+# =============================================================================
+# QR CODE GENERATION
+# =============================================================================
+
 @staff_required
 def quiz_qr_code(request, quiz_code):
-    """Generate and serve a QR code image for a quiz."""
+    """
+    Generate and serve a QR code image for a quiz.
+    
+    The QR code contains a URL that students can scan to quickly
+    access the quiz join page.
+    """
     quiz = get_object_or_404(Quiz, code=quiz_code.upper(), teacher=request.user)
     
     try:
@@ -87,12 +218,16 @@ def quiz_qr_code(request, quiz_code):
         return HttpResponse(buffer.getvalue(), content_type="image/png")
     except Exception as e:
         # Return a blank 1x1 pixel if generation fails
-        return HttpResponse(bytes.fromhex("89504e470d0a1a0a0000000d494844520000000100000001080202000090773db30000000c49444154785e6300010000050001000b0b80c30000000049454e44ae426082"), content_type="image/png")
+        logger.error(f"QR code generation failed for {quiz_code}: {e}")
+        return HttpResponse(
+            bytes.fromhex("89504e470d0a1a0a0000000d494844520000000100000001080202000090773db30000000c49444154785e6300010000050001000b0b80c30000000049454e44ae426082"),
+            content_type="image/png"
+        )
 
 
-
-
-# --- Smart Teacher Help Bot (Comprehensive FAQ + AI-like matching) ---
+# =============================================================================
+# TEACHER HELP BOT (Smart FAQ System)
+# =============================================================================
 
 TEACHER_KB = [
     # ========== FOLDERS & ORGANIZATION ==========

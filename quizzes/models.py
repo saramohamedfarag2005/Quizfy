@@ -1,69 +1,187 @@
+"""
+=============================================================================
+Quizfy Models
+=============================================================================
+
+This module defines all database models for the Quizfy quiz platform.
+
+Models Overview:
+----------------
+- Quiz              : Represents a quiz with settings (timer, due date, etc.)
+- Question          : A question within a quiz (multiple choice, true/false, file upload)
+- Submission        : A student's quiz attempt and results
+- Answer            : Individual answer to a question within a submission
+- StudentProfile    : Extended profile information for student users
+- SubjectFolder     : Organizes quizzes into subject/course folders
+- QuizAttemptPermission : Controls how many attempts a student can make
+- FileSubmission    : Stores uploaded files for file-upload type questions
+
+Author: Quizfy Team
+=============================================================================
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
-import secrets
 from django.core.validators import RegexValidator
 from django.utils import timezone
+
+import secrets
 import qrcode
 from io import BytesIO
 import base64
 
 
-numeric_only=RegexValidator(
+# =============================================================================
+# VALIDATORS
+# =============================================================================
+
+# Validator for university ID - must contain only digits
+numeric_only = RegexValidator(
     regex=r'^\d+$',
     message='University ID must contain digits only'
 )
 
+
+# =============================================================================
+# FILE UPLOAD PATH FUNCTIONS
+# =============================================================================
+
 def question_image_upload_path(instance, filename):
+    """
+    Generate upload path for question images.
+    Path: quiz_images/quiz_{quiz_id}/{filename}
+    """
     return f'quiz_images/quiz_{instance.quiz.id}/{filename}'
 
+
 def file_submission_upload_path(instance, filename):
-    return f'file_submissions/quiz_{instance.submission.quiz.id}/{instance.submission.student_user.id if instance.submission.student_user else "anon"}/{filename}'
-    
+    """
+    Generate upload path for student file submissions.
+    Path: file_submissions/quiz_{quiz_id}/{student_id}/{filename}
+    """
+    student_id = instance.submission.student_user.id if instance.submission.student_user else "anon"
+    return f'file_submissions/quiz_{instance.submission.quiz.id}/{student_id}/{filename}'
+
+
+def teacher_feedback_file_path(instance, filename):
+    """
+    Generate upload path for teacher feedback files on submissions.
+    Path: teacher_feedback/submission_{submission_id}/{filename}
+    """
+    return f"teacher_feedback/submission_{instance.id}/{filename}"
+
+
+def teacher_feedback_upload_path(instance, filename):
+    """
+    Generate upload path for teacher feedback files on FileSubmission objects.
+    Path: teacher_feedback/quiz_{quiz_id}/{student_id}/{filename}
+    """
+    student_id = instance.submission.student_user.id if instance.submission.student_user else "anon"
+    return f'teacher_feedback/quiz_{instance.submission.quiz.id}/{student_id}/{filename}'
+
+
+# =============================================================================
+# QUIZ MODEL
+# =============================================================================
+
 class Quiz(models.Model):
+    """
+    Represents a quiz created by a teacher.
+    
+    Features:
+    - Multiple quiz types (multiple choice, true/false, file upload)
+    - Optional timer (duration in minutes)
+    - Optional due date
+    - Can be organized into folders
+    - Unique access code for students
+    - QR code generation for easy access
+    """
+    
+    # Quiz type choices
     QUIZ_TYPE_CHOICES = [
         ('multiple_choice', 'Multiple Choice'),
         ('true_false', 'True / False'),
         ('file_upload', 'File Upload (PDF/Photo)'),
     ]
     
-    title = models.CharField(max_length=60)
-    code = models.CharField(max_length=40, unique=True, blank=True, null=True)
-    quiz_type = models.CharField(max_length=20, choices=QUIZ_TYPE_CHOICES, default='multiple_choice')
-    folder = models.ForeignKey(
-    "SubjectFolder",
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name="quizzes"
-)
-    teacher = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="quizzes"
+    # Basic information
+    title = models.CharField(
+        max_length=60,
+        help_text="Quiz title displayed to students"
     )
+    code = models.CharField(
+        max_length=40, 
+        unique=True, 
+        blank=True, 
+        null=True,
+        help_text="Unique code for students to access the quiz"
+    )
+    quiz_type = models.CharField(
+        max_length=20, 
+        choices=QUIZ_TYPE_CHOICES, 
+        default='multiple_choice',
+        help_text="Type of questions in this quiz"
+    )
+    
+    # Relationships
+    folder = models.ForeignKey(
+        "SubjectFolder",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quizzes",
+        help_text="Optional folder to organize this quiz"
+    )
+    teacher = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="quizzes",
+        help_text="The teacher who created this quiz"
+    )
+    
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Quiz settings
+    due_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="Quiz closes after this date/time (optional)"
+    )
+    duration_minutes = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Time limit in minutes (optional)"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Teacher can stop/re-open quiz"
+    )
 
-    # ✅ Optional: quiz closes after this date/time
-    due_at = models.DateTimeField(null=True, blank=True)
-
-    # ✅ Timer in MINUTES (not seconds)
-    duration_minutes = models.PositiveIntegerField(null=True, blank=True)
-
-    # ✅ Teacher can stop/re-open quiz
-    is_active = models.BooleanField(default=True)
+    class Meta:
+        verbose_name = "Quiz"
+        verbose_name_plural = "Quizzes"
+        ordering = ['-created_at']
 
     def is_expired(self):
-        """True if due_at exists and current time is past it."""
+        """Check if the quiz has passed its due date."""
         return self.due_at is not None and timezone.now() > self.due_at
 
     def can_start(self):
-        """Students can start only if teacher didn't stop it AND it's not expired."""
+        """
+        Check if students can start this quiz.
+        Returns True only if:
+        - Teacher hasn't stopped the quiz (is_active=True)
+        - Quiz hasn't expired (due_at not passed)
+        """
         return self.is_active and not self.is_expired()
 
     def get_qr_code_base64(self):
-        """Generate a QR code that points to the quiz link.
-        Students must be logged in to access the quiz directly via code.
+        """
+        Generate a QR code that points to the quiz URL.
+        Returns base64-encoded PNG image or empty string on error.
         """
         try:
-            # Use a proper quiz URL - students will be prompted to login if not authenticated
             qr_data = f"/quiz/{self.code}/"
             qr = qrcode.QRCode(version=1, box_size=10, border=2)
             qr.add_data(qr_data)
@@ -75,96 +193,224 @@ class Quiz(models.Model):
             img_base64 = base64.b64encode(buffer.read()).decode()
             return f"data:image/png;base64,{img_base64}"
         except Exception as e:
-            # Log error and return a placeholder
             print(f"QR Code generation error for {self.code}: {e}")
             return ""
 
     def save(self, *args, **kwargs):
-        """Auto-generate a code if missing."""
+        """Auto-generate a unique 6-character code if not provided."""
         if not self.code:
             self.code = secrets.token_hex(3).upper()
         super().save(*args, **kwargs)
- 
+
     def __str__(self):
         return f"{self.title} - {self.code}"
+
+
+# =============================================================================
+# QUESTION MODEL
+# =============================================================================
+
 class Question(models.Model):
+    """
+    Represents a single question within a quiz.
+    
+    Supports three types:
+    - Multiple Choice: 4 options, one correct answer
+    - True/False: 2 options (True/False), one correct
+    - File Upload: Student uploads a file as their answer (graded manually)
+    """
+    
     QUESTION_TYPE_CHOICES = [
         ('multiple_choice', 'Multiple Choice (4 options)'),
         ('true_false', 'True / False'),
         ('file_upload', 'File Upload (Student uploads file)'),
     ]
     
-    quiz=models.ForeignKey(Quiz,on_delete=models.CASCADE,related_name='questions')
-    question_type=models.CharField(max_length=20, choices=QUESTION_TYPE_CHOICES, default='multiple_choice')
-    text=models.TextField(blank=True)
-    image=models.ImageField(upload_to=question_image_upload_path, blank=True , null=True)
-    # Multiple choice options (blank for true/false)
-    option1=models.CharField(max_length=60, blank=True, default='')
-    option2=models.CharField(max_length=60, blank=True, default='')
-    option3=models.CharField(max_length=60, blank=True, default='')
-    option4=models.CharField(max_length=60, blank=True, default='')
-    # For multiple choice: 1-4, for true/false: 1=True, 2=False
-    correct_option=models.IntegerField(choices=[
-        (1,'Option 1 / True'),(2,'Option 2 / False'),(3,'Option 3'),(4,'Option 4')
-    ], default=1)
-    def option_text(self,number):
+    # Relationship to quiz
+    quiz = models.ForeignKey(
+        Quiz, 
+        on_delete=models.CASCADE, 
+        related_name='questions'
+    )
+    
+    # Question content
+    question_type = models.CharField(
+        max_length=20, 
+        choices=QUESTION_TYPE_CHOICES, 
+        default='multiple_choice'
+    )
+    text = models.TextField(
+        blank=True,
+        help_text="The question text"
+    )
+    image = models.ImageField(
+        upload_to=question_image_upload_path, 
+        blank=True, 
+        null=True,
+        help_text="Optional image for the question"
+    )
+    
+    # Answer options (used for multiple choice and true/false)
+    option1 = models.CharField(max_length=60, blank=True, default='')
+    option2 = models.CharField(max_length=60, blank=True, default='')
+    option3 = models.CharField(max_length=60, blank=True, default='')
+    option4 = models.CharField(max_length=60, blank=True, default='')
+    
+    # Correct answer (1-4 for multiple choice, 1=True/2=False for true/false)
+    correct_option = models.IntegerField(
+        choices=[
+            (1, 'Option 1 / True'),
+            (2, 'Option 2 / False'),
+            (3, 'Option 3'),
+            (4, 'Option 4')
+        ], 
+        default=1
+    )
+
+    class Meta:
+        ordering = ['id']
+
+    def option_text(self, number):
+        """Get the text for a specific option number (1-4)."""
         return {
-            1:self.option1,
-            2:self.option2,
-            3:self.option3,
-            4:self.option4,
-        }.get(number,"(blank)")               
+            1: self.option1,
+            2: self.option2,
+            3: self.option3,
+            4: self.option4,
+        }.get(number, "(blank)")
 
     def __str__(self):
         return self.text[:60] if self.text else f"Question {self.id}"
 
-def teacher_feedback_file_path(instance, filename):
-    """Upload path for teacher feedback files on submissions"""
-    return f"teacher_feedback/submission_{instance.id}/{filename}"
 
+# =============================================================================
+# SUBMISSION MODEL
+# =============================================================================
 
 class Submission(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="submissions")
-
-    student_user = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="submissions"
-    )
-
-    student_name = models.CharField(max_length=60)
-
-    score = models.IntegerField(default=0)
-    total = models.IntegerField(default=0)
-
-    # ✅ timer tracking
-    started_at = models.DateTimeField(null=True, blank=True)
-
-    # ✅ attempt tracking
-
-    attempt_no = models.PositiveIntegerField(default=1)
-
-    # ✅ status
-    is_submitted = models.BooleanField(default=False)
-
-    # ✅ set when finalized (timer ends or student submits)
-    submitted_at = models.DateTimeField(null=True, blank=True)
+    """
+    Represents a student's attempt at a quiz.
     
-    # ✅ Teacher grading fields
-    teacher_comment = models.TextField(blank=True, null=True)
-    manual_grade = models.CharField(max_length=50, blank=True, null=True)  # e.g., "A", "B+", "85%", "Pass"
-    teacher_file = models.FileField(upload_to=teacher_feedback_file_path, blank=True, null=True)
+    Tracks:
+    - Score and total questions
+    - Start and submit times (for timer)
+    - Attempt number (for multiple attempts)
+    - Teacher grading (for file upload quizzes)
+    """
+    
+    # Relationships
+    quiz = models.ForeignKey(
+        Quiz, 
+        on_delete=models.CASCADE, 
+        related_name="submissions"
+    )
+    student_user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="submissions",
+        help_text="The student who made this submission"
+    )
+    
+    # Student identification (backup if user is deleted)
+    student_name = models.CharField(max_length=60)
+    
+    # Scoring
+    score = models.IntegerField(default=0, help_text="Number of correct answers")
+    total = models.IntegerField(default=0, help_text="Total number of questions")
+    
+    # Timer tracking
+    started_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="When the student started the quiz"
+    )
+    submitted_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="When the quiz was submitted (timer end or manual submit)"
+    )
+    
+    # Attempt tracking
+    attempt_no = models.PositiveIntegerField(
+        default=1,
+        help_text="Which attempt this is for the student"
+    )
+    is_submitted = models.BooleanField(
+        default=False,
+        help_text="Whether this submission has been finalized"
+    )
+    
+    # Teacher grading fields (for file upload quizzes)
+    teacher_comment = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Teacher's feedback comment"
+    )
+    manual_grade = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True,
+        help_text="Manual grade (e.g., 'A', 'B+', '85%', 'Pass')"
+    )
+    teacher_file = models.FileField(
+        upload_to=teacher_feedback_file_path, 
+        blank=True, 
+        null=True,
+        help_text="Teacher's corrected/feedback file"
+    )
     teacher_file_name = models.CharField(max_length=255, blank=True, null=True)
     graded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-submitted_at', '-id']
 
     def __str__(self):
         return f"{self.student_name} - {self.quiz.code} ({self.score}/{self.total})"
 
+
+# =============================================================================
+# ANSWER MODEL
+# =============================================================================
+
 class Answer(models.Model):
-    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name='answers')
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    selected = models.IntegerField(null=True, blank=True)
+    """
+    Represents a student's answer to a single question.
+    Links a Submission to a Question with the selected option.
+    """
+    
+    submission = models.ForeignKey(
+        Submission, 
+        on_delete=models.CASCADE, 
+        related_name='answers'
+    )
+    question = models.ForeignKey(
+        Question, 
+        on_delete=models.CASCADE
+    )
+    selected = models.IntegerField(
+        null=True, 
+        blank=True,
+        help_text="The option number selected (1-4)"
+    )
     is_correct = models.BooleanField(default=False)
 
+    class Meta:
+        ordering = ['question__id']
+
+
+# =============================================================================
+# STUDENT PROFILE MODEL
+# =============================================================================
+
 class StudentProfile(models.Model):
+    """
+    Extended profile information for student users.
+    Stores additional data not in the default Django User model.
+    """
+    
+    # City choices (Saudi Arabia)
     CITY_CHOICES = [
         ("Riyadh", "Riyadh"),
         ("Jeddah", "Jeddah"),
@@ -172,10 +418,9 @@ class StudentProfile(models.Model):
         ("Al-Ahsa", "Al-Ahsa"),
         ("Hail", "Hail"),
         ("Madinah", "Madinah"),
-        
-        
     ]
 
+    # Major/field of study choices
     MAJOR_CHOICES = [
         ("CS", "Computer Science"),
         ("IT", "Information Technology"),
@@ -183,14 +428,26 @@ class StudentProfile(models.Model):
         ("LS", "Language Studies"),
     ]
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="student_profile")
+    # Link to Django User model (one-to-one relationship)
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="student_profile"
+    )
 
+    # Student's full name (split into three parts as per Arabic naming convention)
     first_name = models.CharField(max_length=60)
     second_name = models.CharField(max_length=60)
     third_name = models.CharField(max_length=60)
 
-    university_id = models.CharField(max_length=30, unique=True)
+    # University ID (unique identifier)
+    university_id = models.CharField(
+        max_length=30, 
+        unique=True,
+        help_text="Student's university ID number"
+    )
 
+    # Location and study information
     city = models.CharField(max_length=30, choices=CITY_CHOICES)
     major = models.CharField(max_length=30, choices=MAJOR_CHOICES)
 
@@ -198,43 +455,125 @@ class StudentProfile(models.Model):
         return f"{self.first_name} {self.second_name} {self.third_name}".strip()
 
 
+# =============================================================================
+# SUBJECT FOLDER MODEL
+# =============================================================================
+
 class SubjectFolder(models.Model):
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name="folders")
-    name = models.CharField(max_length=80)
+    """
+    Organizes quizzes into subject/course folders for a teacher.
+    
+    Each teacher can have multiple folders, and each folder name
+    must be unique per teacher.
+    """
+    
+    teacher = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="folders"
+    )
+    name = models.CharField(
+        max_length=80,
+        help_text="Folder name (e.g., 'Physics 101', 'Math Fall 2024')"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("teacher", "name")
+        ordering = ['name']
 
     def __str__(self):
         return f"{self.name} ({self.teacher.username})"
+
+
+# =============================================================================
+# QUIZ ATTEMPT PERMISSION MODEL
+# =============================================================================
+
 class QuizAttemptPermission(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="attempt_permissions")
-    student_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="quiz_permissions")
-    allowed_attempts = models.PositiveIntegerField(default=1)
+    """
+    Controls how many attempts a student can make on a specific quiz.
+    
+    By default, students get 1 attempt. Teachers can grant extra attempts
+    for individual students (e.g., for technical issues or retakes).
+    """
+    
+    quiz = models.ForeignKey(
+        Quiz, 
+        on_delete=models.CASCADE, 
+        related_name="attempt_permissions"
+    )
+    student_user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name="quiz_permissions"
+    )
+    allowed_attempts = models.PositiveIntegerField(
+        default=1,
+        help_text="Number of attempts allowed for this student"
+    )
 
     class Meta:
         unique_together = ("quiz", "student_user")
 
 
-def teacher_feedback_upload_path(instance, filename):
-    return f'teacher_feedback/quiz_{instance.submission.quiz.id}/{instance.submission.student_user.id if instance.submission.student_user else "anon"}/{filename}'
-
+# =============================================================================
+# FILE SUBMISSION MODEL
+# =============================================================================
 
 class FileSubmission(models.Model):
-    """Stores uploaded files for file_upload type quizzes or file upload questions"""
-    submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="file_submissions")
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, null=True, blank=True, related_name="file_answers")
+    """
+    Stores uploaded files for file_upload type quizzes or questions.
+    
+    Supports:
+    - Quiz-level file uploads (entire quiz is one file upload)
+    - Question-level file uploads (specific questions require file uploads)
+    - Teacher grading with comments and feedback files
+    """
+    
+    # Relationships
+    submission = models.ForeignKey(
+        Submission, 
+        on_delete=models.CASCADE, 
+        related_name="file_submissions"
+    )
+    question = models.ForeignKey(
+        Question, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name="file_answers",
+        help_text="Link to specific question (null for quiz-level uploads)"
+    )
+    
+    # Student's uploaded file
     file = models.FileField(upload_to=file_submission_upload_path)
     file_name = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
     # Teacher grading fields
-    teacher_comment = models.TextField(blank=True, null=True)
-    grade = models.CharField(max_length=20, blank=True, null=True)  # e.g., "A", "B", "85%"
-    teacher_file = models.FileField(upload_to=teacher_feedback_upload_path, blank=True, null=True)
+    teacher_comment = models.TextField(
+        blank=True, 
+        null=True,
+        help_text="Teacher's feedback comment"
+    )
+    grade = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True,
+        help_text="Grade (e.g., 'A', 'B', '85%')"
+    )
+    teacher_file = models.FileField(
+        upload_to=teacher_feedback_upload_path, 
+        blank=True, 
+        null=True,
+        help_text="Teacher's corrected/feedback file"
+    )
     teacher_file_name = models.CharField(max_length=255, blank=True, null=True)
     graded_at = models.DateTimeField(null=True, blank=True)
-    
+
+    class Meta:
+        ordering = ['uploaded_at']
+
     def __str__(self):
         return f"{self.file_name} - {self.submission.student_name}"
