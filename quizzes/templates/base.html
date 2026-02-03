@@ -19,38 +19,46 @@
 
     <nav class="navbar">
         <div class="nav-left">
-          <button class="hamburger" onclick="toggleMenu()" aria-label="Toggle navigation" aria-expanded="false">☰</button>
-          <a href="{% url 'landing' %}" class="logo">Quizfy</a>
+          <button class="hamburger" id="hamburger-btn" onclick="toggleMenu()" aria-label="Toggle navigation" aria-expanded="false">
+            <span class="hamburger-icon">☰</span>
+          </button>
         </div>
       
         <div class="nav-right" id="mobile-nav">
+          <!-- Close button for mobile -->
+          <button class="mobile-close-btn" onclick="toggleMenu()" aria-label="Close menu">✕</button>
+          
           {% if user.is_authenticated %}
       
             {% if user.is_staff %}
               <!-- TEACHER NAV -->
-              <a href="{% url 'teacher_quizzes' %}" class="nav-link">My Quizzes</a>
-              <a href="{% url 'change_password' %}" class="nav-link">Change Password</a>
-              <a href="{% url 'app_logout' %}" class="btn danger small">Logout</a>
+              <a href="{% url 'teacher_quizzes' %}" class="nav-link">📚 My Quizzes</a>
+              <a href="{% url 'change_password' %}" class="nav-link">🔑 Change Password</a>
+              <a href="{% url 'app_logout' %}" class="btn danger">🚪 Logout</a>
       
             {% else %}
-              <!-- STUDENT NAV (compact: keep Dashboard, remove duplicate Home) -->
-              <a href="{% url 'student_dashboard' %}" class="nav-link">Dashboard</a>
-              <a href="{% url 'change_password' %}" class="nav-link">Change Password</a>
-              <a href="{% url 'app_logout' %}" class="btn danger small">Logout</a>
+              <!-- STUDENT NAV -->
+              <a href="{% url 'student_dashboard' %}" class="nav-link">📊 Dashboard</a>
+              <a href="{% url 'change_password' %}" class="nav-link">🔑 Change Password</a>
+              <a href="{% url 'app_logout' %}" class="btn danger">🚪 Logout</a>
             {% endif %}
       
           {% else %}
             <!-- PUBLIC NAV -->
-            <a href="{% url 'home' %}" class="nav-link">Home</a>
-            <a href="{% url 'teacher_login' %}" class="nav-link">Teacher Login</a>
-            <a href="{% url 'student_login' %}" class="nav-link">Student Login</a>
-            <a href="{% url 'student_signup' %}" class="btn primary small">Sign Up</a>
+            <a href="{% url 'home' %}" class="nav-link">🏠 Home</a>
+            <a href="{% url 'teacher_login' %}" class="nav-link">👨‍🏫 Teacher Login</a>
+            <a href="{% url 'student_login' %}" class="nav-link">👨‍🎓 Student Login</a>
+            <a href="{% url 'student_signup' %}" class="btn primary">✨ Sign Up</a>
           {% endif %}
-          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+          <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+            <span class="theme-icon">🌙</span> <span class="theme-text">Toggle Theme</span>
+          </button>
         </div>
       </nav>
       
     </div>
+    <!-- Mobile overlay -->
+    <div class="mobile-overlay" id="mobile-overlay" onclick="toggleMenu()"></div>
 </header>
 
 <main class="container">
@@ -80,28 +88,69 @@ function toggleTheme() {
 }
 </script>
 <script>
-// Mobile menu toggle and entrance animations
+// Mobile menu toggle with smooth animations
 function toggleMenu(){
   const nav = document.getElementById('mobile-nav');
-  const btn = document.querySelector('.hamburger');
-  if(!nav) return;
+  const btn = document.getElementById('hamburger-btn');
+  const overlay = document.getElementById('mobile-overlay');
+  if(!nav || !btn) return;
+  
   const isOpen = nav.classList.toggle('open');
+  btn.classList.toggle('active', isOpen);
   btn.setAttribute('aria-expanded', isOpen);
+  
+  // Toggle overlay
+  if(overlay) overlay.classList.toggle('active', isOpen);
+  
+  // Prevent body scroll when menu is open
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+  
+  // Update hamburger icon
+  const icon = btn.querySelector('.hamburger-icon');
+  if(icon) icon.textContent = isOpen ? '✕' : '☰';
 }
 
+// Close menu when clicking a link
 document.addEventListener('DOMContentLoaded', function(){
-  // staggered entrance for cards
+  // Add click listeners to nav links to close menu
+  document.querySelectorAll('#mobile-nav .nav-link, #mobile-nav .btn').forEach(function(link){
+    link.addEventListener('click', function(){
+      if(window.innerWidth <= 600){
+        toggleMenu();
+      }
+    });
+  });
+
+  // Staggered entrance for cards
   document.querySelectorAll('.card').forEach(function(el, idx){
     setTimeout(function(){ el.classList.add('animate-in'); }, idx * 70);
   });
 
-  // close mobile menu on resize to larger screens
+  // Close mobile menu on resize to larger screens
   window.addEventListener('resize', function(){
     if(window.innerWidth > 600){
       const nav = document.getElementById('mobile-nav');
+      const btn = document.getElementById('hamburger-btn');
+      const overlay = document.getElementById('mobile-overlay');
       if(nav) nav.classList.remove('open');
-      const btn = document.querySelector('.hamburger');
-      if(btn) btn.setAttribute('aria-expanded', 'false');
+      if(btn){
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+        const icon = btn.querySelector('.hamburger-icon');
+        if(icon) icon.textContent = '☰';
+      }
+      if(overlay) overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // Close menu on Escape key
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      const nav = document.getElementById('mobile-nav');
+      if(nav && nav.classList.contains('open')){
+        toggleMenu();
+      }
     }
   });
 });
