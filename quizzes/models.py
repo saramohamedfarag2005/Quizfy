@@ -205,6 +205,10 @@ class QuizAttemptPermission(models.Model):
         unique_together = ("quiz", "student_user")
 
 
+def teacher_feedback_upload_path(instance, filename):
+    return f'teacher_feedback/quiz_{instance.submission.quiz.id}/{instance.submission.student_user.id if instance.submission.student_user else "anon"}/{filename}'
+
+
 class FileSubmission(models.Model):
     """Stores uploaded files for file_upload type quizzes or file upload questions"""
     submission = models.ForeignKey(Submission, on_delete=models.CASCADE, related_name="file_submissions")
@@ -213,9 +217,12 @@ class FileSubmission(models.Model):
     file_name = models.CharField(max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     
-    # Optional: teacher can add comments/grade
+    # Teacher grading fields
     teacher_comment = models.TextField(blank=True, null=True)
     grade = models.CharField(max_length=20, blank=True, null=True)  # e.g., "A", "B", "85%"
+    teacher_file = models.FileField(upload_to=teacher_feedback_upload_path, blank=True, null=True)
+    teacher_file_name = models.CharField(max_length=255, blank=True, null=True)
+    graded_at = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return f"{self.file_name} - {self.submission.student_name}"

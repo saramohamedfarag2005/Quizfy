@@ -4,51 +4,554 @@
 {% block title %}Submission Details{% endblock %}
 
 {% block content %}
-  <div class="row">
-    <div>
-      <h1>Submission Details</h1>
-      <p><b>Quiz:</b> {{ quiz.title }} ({{ quiz.code }})</p>
-      <p><b>Score:</b> {{ submission.score }} / {{ submission.total }}</p>
-      <p><b>Submitted:</b> {{ submission.submitted_at|date:"Y-m-d H:i" }}</p>
-    </div>
+<div class="submission-header">
+  <a href="{% url 'student_dashboard' %}" class="back-link">← Back to Dashboard</a>
+  <h1>Submission Details</h1>
+</div>
 
-    <a class="btn secondary" href="{% url 'student_dashboard' %}">
-      ⬅ Back to Dashboard
-    </a>
+<!-- Quiz Info Card -->
+<div class="quiz-info-card">
+  <div class="quiz-main-info">
+    <h2>{{ quiz.title }}</h2>
+    <span class="quiz-code">{{ quiz.code }}</span>
   </div>
-
-  <hr>
-
-  <h2>Review</h2>
-
-  {% for a in answers %}
-    <div class="qbox">
-      <div class="qtext">
-        <b>Q{{ forloop.counter }}.</b> {{ a.question.text }}
+  <div class="submission-stats">
+    <div class="stat-item">
+      <div class="stat-value {% if submission.total > 0 %}{% if submission.score == submission.total %}perfect{% elif submission.score >= submission.total|divisibleby:2 %}good{% endif %}{% endif %}">
+        {{ submission.score }}/{{ submission.total }}
       </div>
+      <div class="stat-label">Score</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-value">{{ submission.submitted_at|date:"M d" }}</div>
+      <div class="stat-label">{{ submission.submitted_at|date:"H:i" }}</div>
+    </div>
+  </div>
+</div>
 
-      {% if a.question.image %}
-        <div style="margin:10px 0;">
-          <img src="{{ a.question.image.url }}" style="max-width:100%; border-radius:10px;">
+<!-- File Submissions Section (for file upload quizzes) -->
+{% if file_submissions %}
+  <div class="section-header">
+    <h3>📄 Your Uploaded Files</h3>
+  </div>
+  
+  {% for fs in file_submissions %}
+    <div class="file-card {% if fs.grade %}graded{% endif %}">
+      {% if fs.question %}
+        <div class="file-question">
+          <span class="question-label">Question:</span> {{ fs.question.text }}
         </div>
       {% endif %}
-
-      <p>
-        <b>Your answer:</b>
-        {% if a.selected %}
-          {{ a.question|option_text:a.selected }}
-        {% else %}
-          (blank)
+      
+      <div class="file-row">
+        <div class="your-file">
+          <div class="file-label">📎 Your Submission</div>
+          <div class="file-item">
+            <span class="file-icon">📄</span>
+            <span class="file-name">{{ fs.file_name }}</span>
+            <a href="{{ fs.file.url }}" target="_blank" class="btn secondary small">View</a>
+          </div>
+          <div class="file-date">Uploaded {{ fs.uploaded_at|date:"M d, Y H:i" }}</div>
+        </div>
+        
+        {% if fs.teacher_file %}
+          <div class="teacher-file">
+            <div class="file-label">📝 Teacher's Feedback File</div>
+            <div class="file-item corrected">
+              <span class="file-icon">✅</span>
+              <span class="file-name">{{ fs.teacher_file_name }}</span>
+              <a href="{{ fs.teacher_file.url }}" target="_blank" class="btn primary small">View Corrected</a>
+            </div>
+          </div>
         {% endif %}
-        |
-        <b>Correct:</b> {{ a.question|option_text:a.question.correct_option }}
-
-        {% if a.is_correct %}
-          <span class="ok">Correct</span>
-        {% else %}
-          <span class="bad">Wrong</span>
-        {% endif %}
-      </p>
+      </div>
+      
+      {% if fs.grade or fs.teacher_comment %}
+        <div class="grading-feedback">
+          {% if fs.grade %}
+            <div class="grade-display">
+              <span class="grade-label">Grade:</span>
+              <span class="grade-value">{{ fs.grade }}</span>
+            </div>
+          {% endif %}
+          
+          {% if fs.teacher_comment %}
+            <div class="teacher-comment">
+              <div class="comment-header">
+                <span class="comment-icon">💬</span>
+                <span class="comment-title">Teacher's Feedback</span>
+              </div>
+              <div class="comment-text">{{ fs.teacher_comment }}</div>
+            </div>
+          {% endif %}
+          
+          {% if fs.graded_at %}
+            <div class="graded-time">Graded on {{ fs.graded_at|date:"M d, Y" }} at {{ fs.graded_at|date:"H:i" }}</div>
+          {% endif %}
+        </div>
+      {% elif quiz.quiz_type == 'file_upload' or fs.question.question_type == 'file_upload' %}
+        <div class="pending-grade">
+          <span class="pending-icon">⏳</span>
+          <span>Awaiting teacher review</span>
+        </div>
+      {% endif %}
     </div>
   {% endfor %}
+{% endif %}
+
+<!-- Question Answers Section -->
+{% if answers %}
+  <div class="section-header">
+    <h3>📝 Question Review</h3>
+  </div>
+
+  <div class="answers-list">
+    {% for a in answers %}
+      <div class="answer-card {% if a.question.question_type == 'file_upload' %}file-type{% elif a.is_correct %}correct{% else %}incorrect{% endif %}">
+        <div class="answer-header">
+          <span class="q-number">Q{{ forloop.counter }}</span>
+          {% if a.question.question_type == 'file_upload' %}
+            <span class="type-badge file">📄 File Upload</span>
+          {% elif a.question.question_type == 'true_false' %}
+            <span class="type-badge tf">T/F</span>
+          {% else %}
+            <span class="type-badge mc">MC</span>
+          {% endif %}
+          {% if a.question.question_type != 'file_upload' %}
+            {% if a.is_correct %}
+              <span class="result correct">✓ Correct</span>
+            {% else %}
+              <span class="result incorrect">✗ Wrong</span>
+            {% endif %}
+          {% endif %}
+        </div>
+        
+        <div class="question-text">{{ a.question.text }}</div>
+
+        {% if a.question.image %}
+          <img src="{{ a.question.image.url }}" class="question-image" alt="Question image">
+        {% endif %}
+
+        {% if a.question.question_type != 'file_upload' %}
+          <div class="answer-comparison">
+            <div class="answer-box your-answer">
+              <div class="answer-label">Your Answer</div>
+              <div class="answer-value">
+                {% if a.question.question_type == 'true_false' %}
+                  {% if a.selected == 1 %}✓ True{% elif a.selected == 2 %}✗ False{% else %}—{% endif %}
+                {% else %}
+                  {% if a.selected %}
+                    {{ a.question|option_text:a.selected }}
+                  {% else %}
+                    (no answer)
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            <div class="answer-box correct-answer">
+              <div class="answer-label">Correct Answer</div>
+              <div class="answer-value">
+                {% if a.question.question_type == 'true_false' %}
+                  {% if a.question.correct_option == 1 %}✓ True{% else %}✗ False{% endif %}
+                {% else %}
+                  {{ a.question|option_text:a.question.correct_option }}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <!-- File upload question - handled in file_submissions loop -->
+          <div class="file-upload-note">
+            <span>📎 See file submission above</span>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<style>
+.submission-header {
+  margin-bottom: 24px;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+.submission-header h1 {
+  margin: 0;
+}
+
+/* Quiz Info Card */
+.quiz-info-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.quiz-main-info h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.25rem;
+}
+
+.quiz-code {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.submission-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-value.perfect {
+  color: #10b981;
+}
+
+.stat-value.good {
+  color: #3b82f6;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* Section Headers */
+.section-header {
+  margin: 28px 0 16px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* File Cards */
+.file-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.file-card.graded {
+  border-left: 4px solid #10b981;
+}
+
+.file-question {
+  font-size: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.question-label {
+  color: var(--muted);
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.file-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--muted);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+.file-item.corrected {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.file-icon {
+  font-size: 20px;
+}
+
+.file-name {
+  flex: 1;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.file-date {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* Grading Feedback */
+.grading-feedback {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.grade-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2));
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.grade-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.grade-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.teacher-comment {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comment-icon {
+  font-size: 18px;
+}
+
+.comment-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.comment-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.graded-time {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 14px;
+}
+
+.pending-grade {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 10px;
+  color: #fbbf24;
+  font-size: 14px;
+}
+
+.pending-icon {
+  font-size: 18px;
+}
+
+/* Answer Cards */
+.answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.answer-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.answer-card.correct {
+  border-left: 4px solid #10b981;
+}
+
+.answer-card.incorrect {
+  border-left: 4px solid #ef4444;
+}
+
+.answer-card.file-type {
+  border-left: 4px solid #3b82f6;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.q-number {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.type-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.type-badge.mc {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.type-badge.tf {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.type-badge.file {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.result {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result.correct {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.result.incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.question-text {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+.question-image {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.answer-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.answer-box {
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.answer-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.answer-value {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.file-upload-note {
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .quiz-info-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .file-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .answer-comparison {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 {% endblock %}

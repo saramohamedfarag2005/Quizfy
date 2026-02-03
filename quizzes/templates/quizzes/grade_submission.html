@@ -1,0 +1,648 @@
+{% extends "base.html" %}
+{% load quiz_extras %}
+
+{% block title %}Grade Submission - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="grade-header">
+  <div class="grade-header-info">
+    <a href="{% url 'quiz_submissions' quiz.id %}" class="back-link">← Back to Submissions</a>
+    <h1>Grade Submission</h1>
+    <p class="quiz-info">{{ quiz.title }} ({{ quiz.code }})</p>
+  </div>
+</div>
+
+<!-- Student Info Card -->
+<div class="student-card">
+  <div class="student-avatar">
+    {{ student_name|slice:":1"|upper }}
+  </div>
+  <div class="student-info">
+    <h2>{{ student_name }}</h2>
+    <div class="student-meta">
+      {% if university_id %}
+        <span class="meta-item">🎓 {{ university_id }}</span>
+      {% endif %}
+      <span class="meta-item">📅 Submitted: {{ submission.submitted_at|date:"M d, Y H:i" }}</span>
+      <span class="meta-item">🔢 Attempt #{{ submission.attempt_no }}</span>
+    </div>
+  </div>
+  <div class="score-display">
+    <div class="score-value">{{ submission.score }}/{{ submission.total }}</div>
+    <div class="score-label">Auto Score</div>
+  </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="grade-form">
+  {% csrf_token %}
+  
+  <!-- Answers Section -->
+  {% if answers %}
+    <div class="section-header">
+      <h2>📝 Question Answers</h2>
+    </div>
+    
+    <div class="answers-list">
+      {% for a in answers %}
+        <div class="answer-card {% if a.question.question_type == 'file_upload' %}file-upload{% elif a.is_correct %}correct{% else %}incorrect{% endif %}">
+          <div class="answer-header">
+            <span class="question-number">Q{{ forloop.counter }}</span>
+            {% if a.question.question_type == 'file_upload' %}
+              <span class="question-badge file">📄 File Upload</span>
+            {% elif a.question.question_type == 'true_false' %}
+              <span class="question-badge tf">T/F</span>
+            {% else %}
+              <span class="question-badge mc">MC</span>
+            {% endif %}
+            {% if a.question.question_type != 'file_upload' %}
+              {% if a.is_correct %}
+                <span class="result-badge correct">✓ Correct</span>
+              {% else %}
+                <span class="result-badge incorrect">✗ Wrong</span>
+              {% endif %}
+            {% endif %}
+          </div>
+          
+          <div class="question-text">{{ a.question.text }}</div>
+          
+          {% if a.question.image %}
+            <img src="{{ a.question.image.url }}" class="question-image" alt="Question image">
+          {% endif %}
+          
+          {% if a.question.question_type == 'file_upload' %}
+            <!-- File upload question - show submitted file -->
+            {% for fs in file_submissions %}
+              {% if fs.question_id == a.question_id %}
+                <div class="file-submission-area">
+                  <div class="submitted-file">
+                    <div class="file-info">
+                      <span class="file-icon">📎</span>
+                      <div>
+                        <div class="file-name">{{ fs.file_name }}</div>
+                        <div class="file-date">Uploaded {{ fs.uploaded_at|date:"M d, Y H:i" }}</div>
+                      </div>
+                    </div>
+                    <a href="{{ fs.file.url }}" target="_blank" class="btn secondary small">View File</a>
+                  </div>
+                  
+                  <!-- Grading Section -->
+                  <div class="grading-section">
+                    <div class="grade-row">
+                      <div class="grade-field">
+                        <label for="grade_{{ fs.id }}">Grade</label>
+                        <input type="text" name="grade_{{ fs.id }}" id="grade_{{ fs.id }}" 
+                               value="{{ fs.grade|default:'' }}" placeholder="e.g., A, B+, 85%">
+                      </div>
+                    </div>
+                    
+                    <div class="comment-field">
+                      <label for="comment_{{ fs.id }}">Feedback Comment</label>
+                      <textarea name="comment_{{ fs.id }}" id="comment_{{ fs.id }}" 
+                                rows="3" placeholder="Add feedback for the student...">{{ fs.teacher_comment|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="teacher-file-section">
+                      <label>Upload Corrected/Feedback File (Optional)</label>
+                      {% if fs.teacher_file %}
+                        <div class="existing-feedback-file">
+                          <span class="file-icon">📄</span>
+                          <span class="file-name">{{ fs.teacher_file_name }}</span>
+                          <a href="{{ fs.teacher_file.url }}" target="_blank" class="btn secondary small">View</a>
+                          <form method="post" action="{% url 'delete_teacher_file' fs.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn danger small" onclick="return confirm('Remove this feedback file?')">Remove</button>
+                          </form>
+                        </div>
+                      {% endif %}
+                      <input type="file" name="teacher_file_{{ fs.id }}" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                      <small>Upload your corrected version or feedback file (PDF, images, Word docs)</small>
+                    </div>
+                    
+                    {% if fs.graded_at %}
+                      <div class="graded-indicator">
+                        ✓ Last graded: {{ fs.graded_at|date:"M d, Y H:i" }}
+                      </div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <!-- Regular question answer display -->
+            <div class="answer-details">
+              <div class="answer-box student">
+                <div class="answer-label">Student's Answer</div>
+                <div class="answer-value">
+                  {% if a.question.question_type == 'true_false' %}
+                    {% if a.selected == 1 %}✓ True{% elif a.selected == 2 %}✗ False{% else %}—{% endif %}
+                  {% else %}
+                    {{ a.question|option_text:a.selected|default:"(no answer)" }}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="answer-box correct-answer">
+                <div class="answer-label">Correct Answer</div>
+                <div class="answer-value">
+                  {% if a.question.question_type == 'true_false' %}
+                    {% if a.question.correct_option == 1 %}✓ True{% else %}✗ False{% endif %}
+                  {% else %}
+                    {{ a.question|option_text:a.question.correct_option }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  
+  <!-- Quiz-level file submissions (if quiz_type is file_upload) -->
+  {% if quiz.quiz_type == 'file_upload' %}
+    {% for fs in file_submissions %}
+      {% if not fs.question %}
+        <div class="section-header">
+          <h2>📄 File Submission</h2>
+        </div>
+        
+        <div class="file-submission-card">
+          <div class="submitted-file large">
+            <div class="file-info">
+              <span class="file-icon large">📎</span>
+              <div>
+                <div class="file-name large">{{ fs.file_name }}</div>
+                <div class="file-date">Uploaded {{ fs.uploaded_at|date:"M d, Y H:i" }}</div>
+              </div>
+            </div>
+            <a href="{{ fs.file.url }}" target="_blank" class="btn primary">📥 View/Download File</a>
+          </div>
+          
+          <div class="grading-section large">
+            <div class="grade-row">
+              <div class="grade-field">
+                <label for="grade_{{ fs.id }}">Grade</label>
+                <input type="text" name="grade_{{ fs.id }}" id="grade_{{ fs.id }}" 
+                       value="{{ fs.grade|default:'' }}" placeholder="e.g., A, B+, 85%">
+              </div>
+            </div>
+            
+            <div class="comment-field">
+              <label for="comment_{{ fs.id }}">Feedback Comment</label>
+              <textarea name="comment_{{ fs.id }}" id="comment_{{ fs.id }}" 
+                        rows="4" placeholder="Add detailed feedback for the student...">{{ fs.teacher_comment|default:'' }}</textarea>
+            </div>
+            
+            <div class="teacher-file-section">
+              <label>Upload Corrected/Feedback File (Optional)</label>
+              {% if fs.teacher_file %}
+                <div class="existing-feedback-file">
+                  <span class="file-icon">📄</span>
+                  <span class="file-name">{{ fs.teacher_file_name }}</span>
+                  <a href="{{ fs.teacher_file.url }}" target="_blank" class="btn secondary small">View</a>
+                  <form method="post" action="{% url 'delete_teacher_file' fs.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn danger small" onclick="return confirm('Remove this feedback file?')">Remove</button>
+                  </form>
+                </div>
+              {% endif %}
+              <input type="file" name="teacher_file_{{ fs.id }}" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+              <small>Upload your corrected version or feedback file</small>
+            </div>
+            
+            {% if fs.graded_at %}
+              <div class="graded-indicator">
+                ✓ Last graded: {{ fs.graded_at|date:"M d, Y H:i" }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+  
+  <div class="form-actions">
+    <button type="submit" class="btn primary large">💾 Save Grading</button>
+    <a href="{% url 'quiz_submissions' quiz.id %}" class="btn secondary large">Cancel</a>
+  </div>
+</form>
+
+<style>
+.grade-header {
+  margin-bottom: 24px;
+}
+
+.back-link {
+  display: inline-block;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+.grade-header h1 {
+  margin: 0 0 4px 0;
+}
+
+.quiz-info {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Student Card */
+.student-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.student-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.student-info {
+  flex: 1;
+}
+
+.student-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+}
+
+.student-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.score-display {
+  text-align: center;
+  padding: 12px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.score-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* Section Headers */
+.section-header {
+  margin: 24px 0 16px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+/* Answer Cards */
+.answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.answer-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  transition: all 0.2s ease;
+}
+
+.answer-card.correct {
+  border-left: 4px solid #10b981;
+}
+
+.answer-card.incorrect {
+  border-left: 4px solid #ef4444;
+}
+
+.answer-card.file-upload {
+  border-left: 4px solid #3b82f6;
+}
+
+.answer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.question-number {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.question-badge {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.question-badge.mc {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.question-badge.tf {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.question-badge.file {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.result-badge {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.result-badge.correct {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.result-badge.incorrect {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.question-text {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.question-image {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+/* Answer Details */
+.answer-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.answer-box {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.answer-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.answer-value {
+  font-weight: 600;
+}
+
+/* File Submission Area */
+.file-submission-area {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.submitted-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.submitted-file.large {
+  padding: 20px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-icon {
+  font-size: 24px;
+}
+
+.file-icon.large {
+  font-size: 32px;
+}
+
+.file-name {
+  font-weight: 600;
+}
+
+.file-name.large {
+  font-size: 1.1rem;
+}
+
+.file-date {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Grading Section */
+.grading-section {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px dashed var(--border);
+}
+
+.grading-section.large {
+  padding: 24px;
+}
+
+.grade-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.grade-field {
+  flex: 1;
+  max-width: 200px;
+}
+
+.grade-field label,
+.comment-field label,
+.teacher-file-section label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.grade-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card1);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.comment-field {
+  margin-bottom: 16px;
+}
+
+.comment-field textarea {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card1);
+  color: var(--text);
+  font-size: 14px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.teacher-file-section {
+  margin-top: 16px;
+}
+
+.teacher-file-section input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px dashed var(--border);
+  background: var(--card1);
+  color: var(--text);
+  margin-top: 8px;
+}
+
+.teacher-file-section small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.existing-feedback-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.existing-feedback-file .file-name {
+  flex: 1;
+}
+
+.graded-indicator {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #10b981;
+}
+
+/* File Submission Card */
+.file-submission-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.btn.large {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+.btn.small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .student-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .score-display {
+    width: 100%;
+  }
+  
+  .answer-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .submitted-file {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn.large {
+    width: 100%;
+  }
+}
+</style>
+{% endblock %}

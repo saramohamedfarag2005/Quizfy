@@ -826,6 +826,85 @@ def quiz_submissions(request, quiz_id):
         "submissions": submissions,
         "attempt_map": attempt_map,
     })
+
+
+@staff_required
+def grade_submission(request, quiz_id, submission_id):
+    """Teacher view to grade a student's submission with file uploads"""
+    quiz = get_object_or_404(Quiz, id=quiz_id, teacher=request.user)
+    submission = get_object_or_404(Submission, id=submission_id, quiz=quiz)
+    
+    # Get answers and file submissions
+    answers = submission.answers.select_related('question').order_by('id')
+    file_submissions = submission.file_submissions.select_related('question').all()
+    
+    # Get student info
+    student_name = submission.student_name or ""
+    university_id = ""
+    if submission.student_user_id:
+        try:
+            sp = getattr(submission.student_user, "student_profile", None)
+            if sp:
+                student_name = f"{sp.first_name} {sp.second_name} {sp.third_name}".strip() or student_name
+                university_id = sp.university_id or ""
+        except:
+            pass
+    
+    if request.method == "POST":
+        # Handle grading for each file submission
+        for fs in file_submissions:
+            grade_key = f"grade_{fs.id}"
+            comment_key = f"comment_{fs.id}"
+            file_key = f"teacher_file_{fs.id}"
+            
+            if grade_key in request.POST:
+                fs.grade = request.POST.get(grade_key, '').strip() or None
+            if comment_key in request.POST:
+                fs.teacher_comment = request.POST.get(comment_key, '').strip() or None
+            
+            # Handle teacher file upload
+            if file_key in request.FILES:
+                teacher_file = request.FILES[file_key]
+                fs.teacher_file = teacher_file
+                fs.teacher_file_name = teacher_file.name
+            
+            fs.graded_at = timezone.now()
+            fs.save()
+        
+        messages.success(request, "Grading saved successfully!")
+        return redirect("grade_submission", quiz_id=quiz.id, submission_id=submission.id)
+    
+    return render(request, "quizzes/grade_submission.html", {
+        "quiz": quiz,
+        "submission": submission,
+        "student_name": student_name,
+        "university_id": university_id,
+        "answers": answers,
+        "file_submissions": file_submissions,
+    })
+
+
+@staff_required
+@require_POST
+def delete_teacher_file(request, file_submission_id):
+    """Delete teacher's uploaded feedback file"""
+    fs = get_object_or_404(FileSubmission, id=file_submission_id)
+    quiz = fs.submission.quiz
+    
+    # Verify teacher owns this quiz
+    if quiz.teacher != request.user:
+        messages.error(request, "Permission denied.")
+        return redirect("teacher_quizzes")
+    
+    # Delete the file
+    if fs.teacher_file:
+        fs.teacher_file.delete()
+        fs.teacher_file_name = None
+        fs.save()
+        messages.success(request, "Feedback file removed.")
+    
+    return redirect("grade_submission", quiz_id=quiz.id, submission_id=fs.submission.id)
+
    
 @staff_required
 @require_POST
@@ -975,11 +1054,13 @@ def student_submission_detail(request, submission_id):
     )
 
     answers = submission.answers.select_related("question").all().order_by("question__id")
+    file_submissions = submission.file_submissions.select_related("question").all()
 
     return render(request, "quizzes/student_submission_detail.html", {
         "submission": submission,
         "quiz": submission.quiz,
         "answers": answers,
+        "file_submissions": file_submissions,
     })
 
 

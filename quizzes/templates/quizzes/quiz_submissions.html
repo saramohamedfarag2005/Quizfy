@@ -14,9 +14,15 @@
 {% for s in submissions %}
   <div class="card submission-card">
     <div class="sub-body">
-      <p class="student-name"><b>{{ s.student_name }}</b></p>
-      <p class="muted">Score: <b>{{ s.score }}/{{ s.total }}</b></p>
-      <p class="muted">Submitted: {{ s.submitted_at }}</p>
+      <div class="sub-header">
+        <div>
+          <p class="student-name"><b>{{ s.student_name }}</b></p>
+          <p class="muted">Score: <b>{{ s.score }}/{{ s.total }}</b> • Submitted: {{ s.submitted_at|date:"M d, Y H:i" }}</p>
+        </div>
+        <a href="{% url 'grade_submission' quiz.id s.id %}" class="btn primary grade-btn">
+          📝 View & Grade
+        </a>
+      </div>
     </div>
 
     {% if s.student_user %}
@@ -89,6 +95,17 @@
 
   .sub-body{
     padding: 4px 2px 14px;
+  }
+
+  .sub-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .grade-btn{
+    white-space: nowrap;
   }
 
   .student-name{

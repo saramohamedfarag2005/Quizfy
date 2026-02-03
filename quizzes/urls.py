@@ -39,6 +39,8 @@ urlpatterns = [
 
     # Submissions + exports (per quiz)
     path("teacher/quizzes/<int:quiz_id>/submission/", views.quiz_submissions, name="quiz_submissions"),
+    path("teacher/quizzes/<int:quiz_id>/submission/<int:submission_id>/grade/", views.grade_submission, name="grade_submission"),
+    path("teacher/file-submission/<int:file_submission_id>/delete-feedback/", views.delete_teacher_file, name="delete_teacher_file"),
     path("teacher/quizzes/<int:quiz_id>/export/", views.export_submissions_excel, name="export_submissions_excel"),
 
     # Move quiz
