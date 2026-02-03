@@ -250,6 +250,69 @@
     {% endfor %}
   {% endif %}
   
+  <!-- General Grading Section (Always Visible) -->
+  <div class="section-header general-grading-header">
+    <h2>📝 Teacher Grading & Feedback</h2>
+    <p class="section-subtitle">Add your grade, comments, and feedback file for this submission</p>
+  </div>
+  
+  <div class="general-grading-card">
+    <div class="grading-row">
+      <div class="grading-field">
+        <label for="submission_grade">📊 Grade / Score</label>
+        <input type="text" name="submission_grade" id="submission_grade" 
+               value="{{ submission.manual_grade|default:'' }}" 
+               placeholder="e.g., A, B+, 85%, Pass, 9/10"
+               class="grade-input large">
+        <small>Enter your grade (letter grade, percentage, points, etc.)</small>
+      </div>
+    </div>
+    
+    <div class="grading-field">
+      <label for="submission_comment">💬 Teacher Comments</label>
+      <textarea name="submission_comment" id="submission_comment" 
+                rows="5" placeholder="Add detailed feedback, suggestions, corrections, or notes for the student..."
+                class="feedback-textarea large">{{ submission.teacher_comment|default:'' }}</textarea>
+    </div>
+    
+    <div class="grading-field file-upload-field">
+      <label>📤 Upload Feedback File (Optional)</label>
+      <p class="field-description">Upload a corrected version, annotated PDF, or any feedback document</p>
+      
+      {% if submission.teacher_file %}
+        <div class="existing-feedback-file large">
+          <span class="file-icon">📄</span>
+          <span class="file-name">{{ submission.teacher_file_name }}</span>
+          <div class="file-actions">
+            <a href="{{ submission.teacher_file.url }}" target="_blank" class="btn secondary small">👁️ View</a>
+            <a href="{{ submission.teacher_file.url }}" download class="btn accent small">📥 Download</a>
+            <form method="post" action="{% url 'delete_submission_teacher_file' submission.id %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn danger small" onclick="return confirm('Remove this feedback file?')">🗑️ Remove</button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+      
+      <div class="file-upload-area">
+        <input type="file" name="submission_teacher_file" id="submission_teacher_file" 
+               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xlsx,.xls" 
+               class="file-input large">
+        <small>Supported: PDF, Images, Word docs, Excel, Text files</small>
+      </div>
+    </div>
+    
+    {% if submission.graded_at %}
+      <div class="graded-indicator success large">
+        ✅ Last graded: {{ submission.graded_at|date:"M d, Y H:i" }}
+      </div>
+    {% else %}
+      <div class="graded-indicator pending large">
+        ⏳ Not yet graded
+      </div>
+    {% endif %}
+  </div>
+  
   <div class="form-actions">
     <button type="submit" class="btn primary large">💾 Save Grading</button>
     <a href="{% url 'quiz_submissions' quiz.id %}" class="btn secondary large">Cancel</a>
@@ -736,6 +799,191 @@
   font-size: 12px;
 }
 
+/* General Grading Section */
+.general-grading-header {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 2px solid rgba(139, 92, 246, 0.2);
+}
+
+.general-grading-header h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.general-grading-card {
+  background: var(--card0);
+  border: 2px solid rgba(139, 92, 246, 0.25);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
+}
+
+[data-theme="light"] .general-grading-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f5f3ff 100%);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.15);
+}
+
+.grading-row {
+  margin-bottom: 20px;
+}
+
+.grading-field {
+  margin-bottom: 20px;
+}
+
+.grading-field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+[data-theme="light"] .grading-field label {
+  color: #5b21b6;
+}
+
+.grading-field small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.grade-input.large {
+  width: 100%;
+  max-width: 300px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 2px solid rgba(139, 92, 246, 0.25);
+  background: var(--card1);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.grade-input.large:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+  outline: none;
+}
+
+[data-theme="light"] .grade-input.large {
+  background: #ffffff;
+}
+
+.feedback-textarea.large {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(139, 92, 246, 0.25);
+  background: var(--card1);
+  color: var(--text);
+  font-size: 15px;
+  resize: vertical;
+  font-family: inherit;
+  min-height: 120px;
+  transition: all 0.2s ease;
+}
+
+.feedback-textarea.large:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+  outline: none;
+}
+
+[data-theme="light"] .feedback-textarea.large {
+  background: #ffffff;
+}
+
+.file-upload-field {
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.field-description {
+  margin: 4px 0 12px 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.existing-feedback-file.large {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.existing-feedback-file.large .file-icon {
+  font-size: 28px;
+}
+
+.existing-feedback-file.large .file-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.existing-feedback-file.large .file-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.file-upload-area {
+  margin-top: 12px;
+}
+
+.file-input.large {
+  width: 100%;
+  padding: 18px;
+  border-radius: 12px;
+  border: 2px dashed rgba(139, 92, 246, 0.3);
+  background: rgba(139, 92, 246, 0.03);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-input.large:hover {
+  border-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.08);
+}
+
+[data-theme="light"] .file-input.large {
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.graded-indicator.large {
+  margin-top: 20px;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .student-card {
@@ -763,6 +1011,23 @@
   
   .btn.large {
     width: 100%;
+  }
+  
+  .general-grading-card {
+    padding: 20px;
+  }
+  
+  .grade-input.large {
+    max-width: 100%;
+  }
+  
+  .existing-feedback-file.large {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .existing-feedback-file.large .file-actions {
+    justify-content: center;
   }
 }
 </style>

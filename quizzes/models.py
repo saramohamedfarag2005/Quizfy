@@ -118,6 +118,11 @@ class Question(models.Model):
     def __str__(self):
         return self.text[:60] if self.text else f"Question {self.id}"
 
+def teacher_feedback_file_path(instance, filename):
+    """Upload path for teacher feedback files on submissions"""
+    return f"teacher_feedback/submission_{instance.id}/{filename}"
+
+
 class Submission(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name="submissions")
 
@@ -142,6 +147,13 @@ class Submission(models.Model):
 
     # ✅ set when finalized (timer ends or student submits)
     submitted_at = models.DateTimeField(null=True, blank=True)
+    
+    # ✅ Teacher grading fields
+    teacher_comment = models.TextField(blank=True, null=True)
+    manual_grade = models.CharField(max_length=50, blank=True, null=True)  # e.g., "A", "B+", "85%", "Pass"
+    teacher_file = models.FileField(upload_to=teacher_feedback_file_path, blank=True, null=True)
+    teacher_file_name = models.CharField(max_length=255, blank=True, null=True)
+    graded_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.student_name} - {self.quiz.code} ({self.score}/{self.total})"

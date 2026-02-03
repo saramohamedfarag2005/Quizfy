@@ -30,6 +30,63 @@
   </div>
 </div>
 
+<!-- Teacher Grading & Feedback Section -->
+{% if submission.manual_grade or submission.teacher_comment or submission.teacher_file %}
+  <div class="teacher-grading-section">
+    <div class="section-header-main">
+      <div class="section-icon">📝</div>
+      <h3>Teacher's Grading & Feedback</h3>
+    </div>
+    
+    <div class="teacher-grading-card">
+      {% if submission.manual_grade %}
+        <div class="teacher-grade-display">
+          <span class="grade-label-main">📊 Grade:</span>
+          <span class="grade-value-main">{{ submission.manual_grade }}</span>
+        </div>
+      {% endif %}
+      
+      {% if submission.teacher_comment %}
+        <div class="teacher-comment-main">
+          <div class="comment-header-main">
+            <span class="comment-icon">💬</span>
+            <span class="comment-title-main">Teacher's Comments</span>
+          </div>
+          <div class="comment-text-main">{{ submission.teacher_comment|linebreaks }}</div>
+        </div>
+      {% endif %}
+      
+      {% if submission.teacher_file %}
+        <div class="teacher-file-main">
+          <div class="file-label-main">📎 Feedback File</div>
+          <div class="file-item-main">
+            <span class="file-icon">📄</span>
+            <span class="file-name">{{ submission.teacher_file_name }}</span>
+            <div class="file-actions-main">
+              <button type="button" class="btn primary small" onclick="openFilePreview('{{ submission.teacher_file.url }}', '{{ submission.teacher_file_name }}')">👁️ View</button>
+              <a href="{{ submission.teacher_file.url }}" download class="btn secondary small">📥 Download</a>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if submission.graded_at %}
+        <div class="graded-time-main">✅ Graded on {{ submission.graded_at|date:"M d, Y" }} at {{ submission.graded_at|date:"H:i" }}</div>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  {% if quiz.quiz_type == 'file_upload' or file_submissions %}
+    <div class="pending-grading-notice">
+      <span class="pending-icon-large">⏳</span>
+      <div class="pending-text">
+        <strong>Awaiting Teacher Review</strong>
+        <p>Your submission is being reviewed. Check back later for feedback.</p>
+      </div>
+    </div>
+  {% endif %}
+{% endif %}
+
 <!-- File Submissions Section (for file upload quizzes) -->
 {% if file_submissions %}
   <div class="section-header">
@@ -640,6 +697,211 @@
   border-radius: 8px;
 }
 
+/* Teacher Grading Section - Main */
+.teacher-grading-section {
+  margin: 28px 0;
+}
+
+.section-header-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.section-icon {
+  font-size: 28px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.section-header-main h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.teacher-grading-card {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
+  border: 2px solid rgba(16, 185, 129, 0.25);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.1);
+}
+
+[data-theme="light"] .teacher-grading-card {
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.15);
+}
+
+.teacher-grade-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.grade-label-main {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.grade-value-main {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  padding: 8px 24px;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
+  border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .grade-value-main {
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+.teacher-comment-main {
+  margin-bottom: 20px;
+}
+
+.comment-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.comment-icon {
+  font-size: 20px;
+}
+
+.comment-title-main {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+[data-theme="light"] .comment-title-main {
+  color: #059669;
+}
+
+.comment-text-main {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  padding: 18px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+[data-theme="light"] .comment-text-main {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.teacher-file-main {
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.file-label-main {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.file-item-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .file-item-main {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.file-item-main .file-icon {
+  font-size: 24px;
+}
+
+.file-item-main .file-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.file-actions-main {
+  display: flex;
+  gap: 8px;
+}
+
+.graded-time-main {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Pending Grading Notice */
+.pending-grading-notice {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 28px 0;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+  border: 2px solid rgba(251, 191, 36, 0.25);
+  border-radius: 16px;
+}
+
+[data-theme="light"] .pending-grading-notice {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.pending-icon-large {
+  font-size: 40px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pending-text strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 6px;
+  color: #f59e0b;
+}
+
+.pending-text p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .quiz-info-card {
@@ -654,6 +916,39 @@
   
   .answer-comparison {
     grid-template-columns: 1fr;
+  }
+  
+  .teacher-grading-card {
+    padding: 20px;
+  }
+  
+  .teacher-grade-display {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .grade-value-main {
+    font-size: 1.6rem;
+    padding: 12px 20px;
+  }
+  
+  .file-item-main {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .file-actions-main {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .pending-grading-notice {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
   }
 }
 </style>

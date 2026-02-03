@@ -1451,7 +1451,20 @@ def grade_submission(request, quiz_id, submission_id):
             pass
     
     if request.method == "POST":
-        # Handle grading for each file submission
+        # Handle general submission grading (always present)
+        submission.manual_grade = request.POST.get('submission_grade', '').strip() or None
+        submission.teacher_comment = request.POST.get('submission_comment', '').strip() or None
+        
+        # Handle teacher file upload for the submission
+        if 'submission_teacher_file' in request.FILES:
+            teacher_file = request.FILES['submission_teacher_file']
+            submission.teacher_file = teacher_file
+            submission.teacher_file_name = teacher_file.name
+        
+        submission.graded_at = timezone.now()
+        submission.save()
+        
+        # Handle grading for each file submission (if any)
         for fs in file_submissions:
             grade_key = f"grade_{fs.id}"
             comment_key = f"comment_{fs.id}"
@@ -1487,7 +1500,7 @@ def grade_submission(request, quiz_id, submission_id):
 @staff_required
 @require_POST
 def delete_teacher_file(request, file_submission_id):
-    """Delete teacher's uploaded feedback file"""
+    """Delete teacher's uploaded feedback file from a FileSubmission"""
     fs = get_object_or_404(FileSubmission, id=file_submission_id)
     quiz = fs.submission.quiz
     
@@ -1504,6 +1517,28 @@ def delete_teacher_file(request, file_submission_id):
         messages.success(request, "Feedback file removed.")
     
     return redirect("grade_submission", quiz_id=quiz.id, submission_id=fs.submission.id)
+
+
+@staff_required
+@require_POST
+def delete_submission_teacher_file(request, submission_id):
+    """Delete teacher's uploaded feedback file from a Submission"""
+    submission = get_object_or_404(Submission, id=submission_id)
+    quiz = submission.quiz
+    
+    # Verify teacher owns this quiz
+    if quiz.teacher != request.user:
+        messages.error(request, "Permission denied.")
+        return redirect("teacher_quizzes")
+    
+    # Delete the file
+    if submission.teacher_file:
+        submission.teacher_file.delete()
+        submission.teacher_file_name = None
+        submission.save()
+        messages.success(request, "Feedback file removed.")
+    
+    return redirect("grade_submission", quiz_id=quiz.id, submission_id=submission.id)
 
    
 @staff_required
