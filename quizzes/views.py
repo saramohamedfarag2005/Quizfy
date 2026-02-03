@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse
 from .models import Quiz,Question,Submission,Answer,StudentProfile,SubjectFolder, QuizAttemptPermission, FileSubmission
 from .forms import (
-    TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm,ChangePasswordForm,TrueFalseQuestionForm,FileUploadSubmissionForm
+    TeacherLoginForm,TeacherSignupForm,QuizForm,QuestionForm,EnterQuizForm, StudentSignupForm, StudentLoginForm,FolderForm,MoveQuizForm,QuizSettingsForm,ChangePasswordForm,TrueFalseQuestionForm,FileUploadSubmissionForm,FileUploadQuestionForm
 )
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import HttpResponse
@@ -764,7 +764,7 @@ def create_question(request, quiz_id):
     if question_type == 'true_false':
         FormClass = TrueFalseQuestionForm
     elif question_type == 'file_upload':
-        FormClass = TrueFalseQuestionForm  # Use simpler form - no options needed
+        FormClass = FileUploadQuestionForm
     else:
         FormClass = QuestionForm
     
@@ -787,7 +787,7 @@ def create_question(request, quiz_id):
             q.option2 = ''
             q.option3 = ''
             q.option4 = ''
-            q.correct_option = 0  # No correct option for file upload
+            q.correct_option = 1  # Default (not used for file uploads)
         else:
             q.question_type = 'multiple_choice'
         q.save()

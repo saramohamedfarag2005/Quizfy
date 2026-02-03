@@ -132,6 +132,28 @@ class FileUploadSubmissionForm(forms.Form):
         return file
 
 
+class FileUploadQuestionForm(forms.ModelForm):
+    """Form for File Upload questions (no options, no correct answer)"""
+    class Meta:
+        model = Question
+        fields = ["text", "image"]
+        widgets = {
+            "text": forms.Textarea(attrs={"rows": 3, "placeholder": "Enter instructions for what the student should upload"}),
+        }
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.question_type = 'file_upload'
+        instance.option1 = ''
+        instance.option2 = ''
+        instance.option3 = ''
+        instance.option4 = ''
+        instance.correct_option = 1  # Default value (not used for file uploads)
+        if commit:
+            instance.save()
+        return instance
+
+
 class EnterQuizForm(forms.Form):
     quiz_code = forms.CharField(
         max_length=10,
