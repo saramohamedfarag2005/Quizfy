@@ -250,69 +250,6 @@
     {% endfor %}
   {% endif %}
   
-  <!-- General Grading Section (Always Visible) -->
-  <div class="section-header general-grading-header">
-    <h2>📝 Teacher Grading & Feedback</h2>
-    <p class="section-subtitle">Add your grade, comments, and feedback file for this submission</p>
-  </div>
-  
-  <div class="general-grading-card">
-    <div class="grading-row">
-      <div class="grading-field">
-        <label for="submission_grade">📊 Grade / Score</label>
-        <input type="text" name="submission_grade" id="submission_grade" 
-               value="{{ submission.manual_grade|default:'' }}" 
-               placeholder="e.g., A, B+, 85%, Pass, 9/10"
-               class="grade-input large">
-        <small>Enter your grade (letter grade, percentage, points, etc.)</small>
-      </div>
-    </div>
-    
-    <div class="grading-field">
-      <label for="submission_comment">💬 Teacher Comments</label>
-      <textarea name="submission_comment" id="submission_comment" 
-                rows="5" placeholder="Add detailed feedback, suggestions, corrections, or notes for the student..."
-                class="feedback-textarea large">{{ submission.teacher_comment|default:'' }}</textarea>
-    </div>
-    
-    <div class="grading-field file-upload-field">
-      <label>📤 Upload Feedback File (Optional)</label>
-      <p class="field-description">Upload a corrected version, annotated PDF, or any feedback document</p>
-      
-      {% if submission.teacher_file %}
-        <div class="existing-feedback-file large">
-          <span class="file-icon">📄</span>
-          <span class="file-name">{{ submission.teacher_file_name }}</span>
-          <div class="file-actions">
-            <a href="{{ submission.teacher_file.url }}" target="_blank" class="btn secondary small">👁️ View</a>
-            <a href="{{ submission.teacher_file.url }}" download class="btn accent small">📥 Download</a>
-            <form method="post" action="{% url 'delete_submission_teacher_file' submission.id %}" style="display:inline;">
-              {% csrf_token %}
-              <button type="submit" class="btn danger small" onclick="return confirm('Remove this feedback file?')">🗑️ Remove</button>
-            </form>
-          </div>
-        </div>
-      {% endif %}
-      
-      <div class="file-upload-area">
-        <input type="file" name="submission_teacher_file" id="submission_teacher_file" 
-               accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xlsx,.xls" 
-               class="file-input large">
-        <small>Supported: PDF, Images, Word docs, Excel, Text files</small>
-      </div>
-    </div>
-    
-    {% if submission.graded_at %}
-      <div class="graded-indicator success large">
-        ✅ Last graded: {{ submission.graded_at|date:"M d, Y H:i" }}
-      </div>
-    {% else %}
-      <div class="graded-indicator pending large">
-        ⏳ Not yet graded
-      </div>
-    {% endif %}
-  </div>
-  
   <div class="form-actions">
     <button type="submit" class="btn primary large">💾 Save Grading</button>
     <a href="{% url 'quiz_submissions' quiz.id %}" class="btn secondary large">Cancel</a>

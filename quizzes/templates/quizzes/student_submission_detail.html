@@ -30,63 +30,6 @@
   </div>
 </div>
 
-<!-- Teacher Grading & Feedback Section -->
-{% if submission.manual_grade or submission.teacher_comment or submission.teacher_file %}
-  <div class="teacher-grading-section">
-    <div class="section-header-main">
-      <div class="section-icon">📝</div>
-      <h3>Teacher's Grading & Feedback</h3>
-    </div>
-    
-    <div class="teacher-grading-card">
-      {% if submission.manual_grade %}
-        <div class="teacher-grade-display">
-          <span class="grade-label-main">📊 Grade:</span>
-          <span class="grade-value-main">{{ submission.manual_grade }}</span>
-        </div>
-      {% endif %}
-      
-      {% if submission.teacher_comment %}
-        <div class="teacher-comment-main">
-          <div class="comment-header-main">
-            <span class="comment-icon">💬</span>
-            <span class="comment-title-main">Teacher's Comments</span>
-          </div>
-          <div class="comment-text-main">{{ submission.teacher_comment|linebreaks }}</div>
-        </div>
-      {% endif %}
-      
-      {% if submission.teacher_file %}
-        <div class="teacher-file-main">
-          <div class="file-label-main">📎 Feedback File</div>
-          <div class="file-item-main">
-            <span class="file-icon">📄</span>
-            <span class="file-name">{{ submission.teacher_file_name }}</span>
-            <div class="file-actions-main">
-              <button type="button" class="btn primary small" onclick="openFilePreview('{{ submission.teacher_file.url }}', '{{ submission.teacher_file_name }}')">👁️ View</button>
-              <a href="{{ submission.teacher_file.url }}" download class="btn secondary small">📥 Download</a>
-            </div>
-          </div>
-        </div>
-      {% endif %}
-      
-      {% if submission.graded_at %}
-        <div class="graded-time-main">✅ Graded on {{ submission.graded_at|date:"M d, Y" }} at {{ submission.graded_at|date:"H:i" }}</div>
-      {% endif %}
-    </div>
-  </div>
-{% else %}
-  {% if quiz.quiz_type == 'file_upload' or file_submissions %}
-    <div class="pending-grading-notice">
-      <span class="pending-icon-large">⏳</span>
-      <div class="pending-text">
-        <strong>Awaiting Teacher Review</strong>
-        <p>Your submission is being reviewed. Check back later for feedback.</p>
-      </div>
-    </div>
-  {% endif %}
-{% endif %}
-
 <!-- File Submissions Section (for file upload quizzes) -->
 {% if file_submissions %}
   <div class="section-header">

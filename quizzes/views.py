@@ -1451,20 +1451,7 @@ def grade_submission(request, quiz_id, submission_id):
             pass
     
     if request.method == "POST":
-        # Handle general submission grading (always present)
-        submission.manual_grade = request.POST.get('submission_grade', '').strip() or None
-        submission.teacher_comment = request.POST.get('submission_comment', '').strip() or None
-        
-        # Handle teacher file upload for the submission
-        if 'submission_teacher_file' in request.FILES:
-            teacher_file = request.FILES['submission_teacher_file']
-            submission.teacher_file = teacher_file
-            submission.teacher_file_name = teacher_file.name
-        
-        submission.graded_at = timezone.now()
-        submission.save()
-        
-        # Handle grading for each file submission (if any)
+        # Handle grading for each file submission (per-question file uploads only)
         for fs in file_submissions:
             grade_key = f"grade_{fs.id}"
             comment_key = f"comment_{fs.id}"
@@ -1888,6 +1875,7 @@ def export_submissions_excel(request, quiz_id):
         Submission.objects
         .filter(quiz=quiz, is_submitted=True)
         .select_related("student_user", "student_user__student_profile")
+        .prefetch_related("file_submissions__question")
         .order_by("-submitted_at", "-id")
     )
 
@@ -1918,10 +1906,16 @@ def export_submissions_excel(request, quiz_id):
     thin = Side(style="thin", color="D1D5DB")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
+    # Get file upload questions for this quiz
+    file_upload_questions = list(quiz.questions.filter(question_type='file_upload').order_by('id'))
+    num_file_cols = len(file_upload_questions)
+    total_cols = 6 + num_file_cols  # Base 6 cols + file grade cols
+    end_col_letter = get_column_letter(total_cols) if total_cols > 0 else "F"
+
     # ---------------------------
     # Row 1: Big Title Bar
     # ---------------------------
-    ws.merge_cells("A1:F1")
+    ws.merge_cells(f"A1:{end_col_letter}1")
     ws["A1"] = "Quiz Submissions Report"
     ws["A1"].font = title_font
     ws["A1"].alignment = center
@@ -1931,7 +1925,7 @@ def export_submissions_excel(request, quiz_id):
     # ---------------------------
     # Row 2: Subtitle Bar
     # ---------------------------
-    ws.merge_cells("A2:F2")
+    ws.merge_cells(f"A2:{end_col_letter}2")
     ws["A2"] = (
         f"Quiz: {quiz.title}  |  Code: {quiz.code}  |  "
         f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}  |  Teacher: {request.user.username}"
@@ -1955,6 +1949,11 @@ def export_submissions_excel(request, quiz_id):
         "Percentage",
         "Submitted At",
     ]
+    
+    # Add file grade headers for each file upload question
+    for i, q in enumerate(file_upload_questions, start=1):
+        q_label = f"Q{q.id}" if not q.text else q.text[:15]
+        headers.append(f"File Grade ({q_label})")
 
     ws.append(headers)
     header_row = ws.max_row
@@ -1978,14 +1977,22 @@ def export_submissions_excel(request, quiz_id):
         pct = (score / total) if total else 0
         submitted_str = s.submitted_at.strftime("%Y-%m-%d %H:%M") if s.submitted_at else ""
 
-        ws.append([
+        row_data = [
             full_name,
             university_id,
             score,
             total,
             pct,
             submitted_str,
-        ])
+        ]
+        
+        # Add file grades for each file upload question
+        file_grades_map = {fs.question_id: fs.grade for fs in s.file_submissions.all() if fs.question_id}
+        for q in file_upload_questions:
+            file_grade = file_grades_map.get(q.id, "")
+            row_data.append(file_grade or "Not Graded")
+        
+        ws.append(row_data)
 
     end_row = ws.max_row
 
@@ -1998,7 +2005,7 @@ def export_submissions_excel(request, quiz_id):
 
     # Excel Table style (filters + stripes)
     if end_row >= start_data_row:
-        ref = f"A{header_row}:F{end_row}"
+        ref = f"A{header_row}:{end_col_letter}{end_row}"
         table = Table(displayName=f"QuizSubs{quiz.id}", ref=ref)
         table.tableStyleInfo = TableStyleInfo(
             name="TableStyleMedium9",
@@ -2044,7 +2051,7 @@ def export_folder_boxes_excel(request, folder_id):
         Submission.objects
         .filter(quiz__in=quizzes, is_submitted=True)
         .select_related("quiz", "student_user", "student_user__student_profile")
-        .prefetch_related("answers__question")
+        .prefetch_related("answers__question", "file_submissions__question")
         .order_by("-submitted_at", "-id")
     )
 
@@ -2087,12 +2094,16 @@ def export_folder_boxes_excel(request, folder_id):
 
     for q in quizzes:
         questions = list(q.questions.all().order_by("id"))
+        file_upload_questions = [qq for qq in questions if qq.question_type == 'file_upload']
         q_headers = [f"Q{i}" for i in range(1, len(questions) + 1)]
+        
+        # Add file grade headers for file upload questions
+        file_grade_headers = [f"File Grade (Q{i+1})" for i, qq in enumerate(questions) if qq.question_type == 'file_upload']
 
         headers = [
             "Student Full Name", "University ID", 
             "Score", "Total", "Percentage"
-        ] + q_headers
+        ] + q_headers + file_grade_headers
 
         end_col = len(headers)
 
@@ -2131,8 +2142,12 @@ def export_folder_boxes_excel(request, folder_id):
             # per-question correctness: 1 correct, 0 wrong, "" missing
             ans_map = {a.question_id: (1 if a.is_correct else 0) for a in s.answers.all()}
             per_q = [ans_map.get(qq.id, "") for qq in questions]
+            
+            # file grades for file upload questions
+            file_grades_map = {fs.question_id: fs.grade for fs in s.file_submissions.all() if fs.question_id}
+            file_grades = [file_grades_map.get(qq.id, "Not Graded") or "Not Graded" for qq in questions if qq.question_type == 'file_upload']
 
-            values = [full_name, university_id, score, total, pct] + per_q
+            values = [full_name, university_id, score, total, pct] + per_q + file_grades
 
             for c, v in enumerate(values, start=1):
                 dc = ws.cell(row=row, column=c, value=v)
@@ -2200,6 +2215,7 @@ def export_student_folder_excel(request, folder_id, student_id):
         Submission.objects
         .filter(quiz__in=quizzes, student_user=student, is_submitted=True)
         .select_related("quiz", "student_user", "student_user__student_profile")
+        .prefetch_related("file_submissions__question")
         .order_by("quiz__title", "-submitted_at", "-id")
     )
 
@@ -2294,7 +2310,7 @@ def export_student_folder_excel(request, folder_id, student_id):
     # Quiz Results section header
     # ------------------------------------------------------------
     start_table = r + 1
-    ws.merge_cells(f"A{start_table}:F{start_table}")
+    ws.merge_cells(f"A{start_table}:G{start_table}")
     ws[f"A{start_table}"] = "Quiz Results (This Folder)"
     ws[f"A{start_table}"].font = section_font
     ws[f"A{start_table}"].alignment = Alignment(horizontal="left", vertical="center")
@@ -2305,7 +2321,7 @@ def export_student_folder_excel(request, folder_id, student_id):
     # Table header row (blue)
     # ------------------------------------------------------------
     headers_row = start_table + 1
-    headers = ["Quiz Title", "Quiz Code", "Score", "Total", "Percentage", "Submitted At"]
+    headers = ["Quiz Title", "Quiz Code", "Score", "Total", "Percentage", "File Grades", "Submitted At"]
 
     for i, h in enumerate(headers, start=1):
         cell = ws.cell(row=headers_row, column=i, value=h)
@@ -2335,13 +2351,17 @@ def export_student_folder_excel(request, folder_id, student_id):
 
         total_score += score
         total_total += tot
+        
+        # Collect file grades for this submission
+        file_grades = [fs.grade for fs in s.file_submissions.all() if fs.grade]
+        file_grades_str = ", ".join(file_grades) if file_grades else "N/A"
 
-        row_values = [s.quiz.title, s.quiz.code, score, tot, pct, submitted_str]
+        row_values = [s.quiz.title, s.quiz.code, score, tot, pct, file_grades_str, submitted_str]
 
         for col_idx, val in enumerate(row_values, start=1):
             cell = ws.cell(row=data_row, column=col_idx, value=val)
             cell.border = border
-            cell.alignment = left if col_idx in (1, 6) else center
+            cell.alignment = left if col_idx in (1, 7) else center
 
         ws.cell(row=data_row, column=5).number_format = "0.0%"
         data_row += 1
@@ -2350,7 +2370,7 @@ def export_student_folder_excel(request, folder_id, student_id):
 
     # Add Excel “Table” styling like screenshot filters
     if last_data_row >= headers_row + 1:
-        table_ref = f"A{headers_row}:F{last_data_row}"
+        table_ref = f"A{headers_row}:G{last_data_row}"
         table = Table(displayName="StudentQuizResults", ref=table_ref)
         table.tableStyleInfo = TableStyleInfo(
             name="TableStyleMedium9",
