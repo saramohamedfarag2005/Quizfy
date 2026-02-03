@@ -1,53 +1,447 @@
 {% extends "base.html" %}
-{% block title %}My Quizzes{% endblock %}
+{% block title %}Teacher Dashboard{% endblock %}
 {% block content %}
 
-<div class="row">
-  <h1>My Quizzes</h1>
-  <a class="btn primary" href="{% url 'create_quiz' %}">+ Create Quiz</a>
+<style>
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-icon {
+  font-size: 40px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.create-btn {
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(139, 92, 246, 0.45);
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--card0);
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+}
+
+[data-theme="light"] .empty-state {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.empty-state h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.empty-state a {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Quiz Cards Grid */
+.quiz-grid {
+  display: grid;
+  gap: 20px;
+}
+
+.quiz-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .quiz-card {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border-color: rgba(139, 92, 246, 0.12);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.08);
+}
+
+.quiz-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
+}
+
+.quiz-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.quiz-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.quiz-info h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.quiz-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.quiz-code code {
+  background: rgba(139, 92, 246, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--primary);
+  font-family: monospace;
+}
+
+[data-theme="light"] .quiz-code code {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.qr-btn {
+  padding: 10px 16px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .qr-btn {
+  background: rgba(139, 92, 246, 0.08);
+}
+
+.qr-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary);
+}
+
+.quiz-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 12px;
+}
+
+[data-theme="light"] .quiz-stats {
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.stat-icon {
+  font-size: 16px;
+}
+
+.stat-value {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.action-btn.secondary {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="light"] .action-btn.secondary {
+  background: rgba(139, 92, 246, 0.08);
+  color: #7c3aed;
+}
+
+.action-btn.secondary:hover {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* QR Modal */
+.qr-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.qr-modal {
+  background: var(--card0);
+  border-radius: 24px;
+  padding: 32px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 25px 80px rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="light"] .qr-modal {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+}
+
+.qr-modal h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.qr-modal img {
+  max-width: 100%;
+  border-radius: 16px;
+  margin: 16px 0;
+  border: 2px solid rgba(139, 92, 246, 0.2);
+}
+
+.qr-code-text {
+  font-size: 14px;
+  margin: 16px 0;
+  color: var(--muted);
+}
+
+.close-modal-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
+}
+
+.close-modal-btn:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quiz-card-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .qr-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quiz-stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .quiz-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
+
+<div class="dashboard-header">
+  <div class="dashboard-title">
+    <div class="dashboard-icon">📚</div>
+    <h1>My Quizzes</h1>
+  </div>
+  <a class="create-btn" href="{% url 'create_quiz' %}">✨ Create Quiz</a>
 </div>
 
 {% if not quizzes %}
-  <div class="card">
-    <p style="text-align: center;">No quizzes yet. <a href="{% url 'create_quiz' %}">Create one</a></p>
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>No quizzes yet</h3>
+    <p>Get started by <a href="{% url 'create_quiz' %}">creating your first quiz</a>!</p>
+  </div>
+{% else %}
+  <div class="quiz-grid">
+    {% for q in quizzes %}
+      <div class="quiz-card">
+        <div class="quiz-card-header">
+          <div class="quiz-info">
+            <h3>{{ q.title }}</h3>
+            <div class="quiz-code">
+              <span>Code:</span>
+              <code>{{ q.code }}</code>
+            </div>
+          </div>
+          <button class="qr-btn" onclick="showQR('{{ q.code }}', '/quiz/{{ q.code }}/qr/')">
+            📱 QR Code
+          </button>
+        </div>
+
+        <div class="quiz-stats">
+          <div class="stat">
+            <span class="stat-icon">❓</span>
+            <span class="stat-value">{{ q.questions.count }}</span>
+            <span>Questions</span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">📊</span>
+            <span class="stat-value">{{ q.submissions.count }}</span>
+            <span>Submissions</span>
+          </div>
+        </div>
+
+        <div class="quiz-actions">
+          <a class="action-btn secondary" href="{% url 'create_question' q.id %}">➕ Add Question</a>
+          <a class="action-btn secondary" href="{% url 'quiz_submissions' q.id %}">📋 View Submissions</a>
+          <a class="action-btn secondary" href="{% url 'export_submissions_excel' q.id %}">📥 Export Excel</a>
+          <a class="action-btn danger" href="{% url 'delete_quiz' q.id %}">🗑️ Delete</a>
+        </div>
+      </div>
+    {% endfor %}
   </div>
 {% endif %}
 
-{% for q in quizzes %}
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-      <div style="flex: 1; min-width: 200px;">
-        <h3 style="margin: 0 0 8px 0;">{{ q.title }}</h3>
-        <p style="margin: 4px 0; font-size: 13px;">
-          <b>Code:</b> <code style="background: rgba(255,255,255,.06); padding: 2px 6px; border-radius: 4px;">{{ q.code }}</code>
-        </p>
-      </div>
-      <button class="btn secondary" onclick="showQR('{{ q.code }}', '/quiz/{{ q.code }}/qr/')" title="View QR Code" style="white-space: nowrap;">
-        📱 QR Code
-      </button>
-    </div>
-
-    <p style="margin: 8px 0; font-size: 13px;">
-      <b>Questions:</b> {{ q.questions.count }} | 
-      <b>Submissions:</b> {{ q.submissions.count }}
-    </p>
-
-    <div class="actions">
-      <a class="btn secondary" href="{% url 'create_question' q.id %}">Add Question</a>
-      <a class="btn secondary" href="{% url 'quiz_submissions' q.id %}">View Submissions</a>
-      <a class="btn secondary" href="{% url 'export_submissions_excel' q.id %}">Export Excel</a>
-      <a class="btn danger" href="{% url 'delete_quiz' q.id %}">Delete</a>
-    </div>
-  </div>
-{% endfor %}
-
 <!-- QR Code Modal -->
-<div id="qrModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
-  <div style="background: var(--card0); border-radius: 18px; padding: 24px; text-align: center; max-width: 400px; width: 100%;">
-    <h2 style="margin: 0 0 16px 0;">Quiz QR Code</h2>
-    <img id="qrImage" src="" alt="QR Code" style="max-width: 100%; border-radius: 10px; margin: 16px 0; border: 2px solid var(--border);">
-    <p id="qrCode" style="font-size: 14px; margin: 12px 0; word-break: break-all;"></p>
-    <button class="btn primary" onclick="closeQR()" style="width: 100%;">Close</button>
+<div id="qrModal" class="qr-modal-overlay">
+  <div class="qr-modal">
+    <h2>📱 Quiz QR Code</h2>
+    <img id="qrImage" src="" alt="QR Code">
+    <p id="qrCode" class="qr-code-text"></p>
+    <button class="close-modal-btn" onclick="closeQR()">Done</button>
   </div>
 </div>
 
@@ -64,7 +458,6 @@ function closeQR() {
   document.getElementById('qrModal').style.display = 'none';
 }
 
-// Close modal on background click
 document.getElementById('qrModal').addEventListener('click', function(e) {
   if (e.target === this) closeQR();
 });
