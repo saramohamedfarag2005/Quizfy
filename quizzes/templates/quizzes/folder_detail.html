@@ -1,62 +1,184 @@
 {% extends "base.html" %}
-{% block title %}Folder: {{ folder.name }}{% endblock %}
+{% block title %}{{ folder.name }} - Quizfy{% endblock %}
 
 {% block content %}
-
-<div class="row" style="align-items:flex-end; gap:14px; margin-bottom:14px;">
-  <div>
-    <h1 style="margin:0;">{{ folder.name }}</h1>
-    <p style="margin:6px 0 0; color:var(--muted);">
-      {{ quizzes|length }} quiz{{ quizzes|length|pluralize:"zes" }} in this folder
-    </p>
+<!-- Page Header -->
+<div class="folder-header">
+  <div class="header-left">
+    <a href="{% url 'teacher_quizzes' %}" class="back-link">← Back to Dashboard</a>
+    <div class="header-content">
+      <div class="folder-icon">📁</div>
+      <div class="header-text">
+        <h1>{{ folder.name }}</h1>
+        <p class="header-meta">{{ quizzes|length }} quiz{{ quizzes|length|pluralize:"zes" }} in this folder</p>
+      </div>
+    </div>
   </div>
-
-  <div class="actions" style="margin-left:auto; gap: 8px;">
-    <a class="btn" href="{% url 'teacher_quizzes' %}">← Back</a>
-    <a class="btn" href="{% url 'folder_analytics' folder.id %}" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">📊 Analytics</a>
+  <div class="header-actions">
+    <a class="btn secondary" href="{% url 'folder_analytics' folder.id %}">📊 Analytics</a>
     <a class="btn primary" href="{% url 'create_quiz' %}?folder={{ folder.id }}">+ Create Quiz</a>
-    <a class="btn danger" href="{% url 'delete_folder' folder.id %}" title="Delete Folder">🗑️ Delete Folder</a>
+    <a class="btn danger" href="{% url 'delete_folder' folder.id %}" title="Delete Folder">🗑️</a>
   </div>
 </div>
 
+<!-- Quizzes List -->
 {% if quizzes %}
-  {% for quiz in quizzes %}
-    <div class="card compact quiz-card">
-      <div class="quiz-card-header">
-        <div class="quiz-info">
-          <h2 style="margin:0; font-size:18px; color:var(--text);">
-            {{ quiz.title }}
-          </h2>
-          <p style="margin:6px 0 0; color:var(--muted); font-size: 13px;">
-            Code: <b>{{ quiz.code }}</b>
-            {% if quiz.created_at %} · {{ quiz.created_at|date:"M d, Y" }}{% endif %}
-            · {{ quiz.submitted_count }}/{{ quiz.assigned_count }} submitted
-          </p>
-        </div>
-        <div class="quiz-actions">
-          <a class="btn primary" href="{% url 'teacher_quiz_detail' quiz.id %}">Open</a>
+  <div class="quizzes-grid">
+    {% for quiz in quizzes %}
+      <div class="quiz-card">
+        <div class="quiz-card-inner">
+          <div class="quiz-icon">📝</div>
+          <div class="quiz-info">
+            <h3 class="quiz-title">{{ quiz.title }}</h3>
+            <div class="quiz-meta">
+              <span class="quiz-code">{{ quiz.code }}</span>
+              {% if quiz.created_at %}
+                <span class="meta-dot">•</span>
+                <span>{{ quiz.created_at|date:"M d, Y" }}</span>
+              {% endif %}
+              <span class="meta-dot">•</span>
+              <span class="submission-count">{{ quiz.submitted_count }}/{{ quiz.assigned_count }} submitted</span>
+            </div>
+          </div>
+          <div class="quiz-action">
+            <a class="btn primary" href="{% url 'teacher_quiz_detail' quiz.id %}">Open →</a>
+          </div>
         </div>
       </div>
-    </div>
-  {% endfor %}
+    {% endfor %}
+  </div>
 {% else %}
-  <div class="card">
-    <p style="margin:0; color:var(--muted);">
-      No quizzes in this folder yet.
-    </p>
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>No Quizzes Yet</h3>
+    <p>Create your first quiz in this folder</p>
+    <a class="btn primary" href="{% url 'create_quiz' %}?folder={{ folder.id }}">+ Create Quiz</a>
   </div>
 {% endif %}
 
 <style>
-.quiz-card {
-  margin-bottom: 12px;
+/* Page Header */
+.folder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
-.quiz-card-header {
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background: rgba(139, 92, 246, 0.05);
+  width: fit-content;
+}
+
+.back-link:hover {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
+}
+
+.folder-icon {
+  font-size: 48px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+/* Quizzes Grid */
+.quizzes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.quiz-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+[data-theme="light"] .quiz-card {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border-color: rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.05);
+}
+
+.quiz-card:hover {
+  transform: translateX(4px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.12);
+}
+
+.quiz-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.quiz-icon {
+  font-size: 32px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 14px;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .quiz-icon {
+  background: rgba(139, 92, 246, 0.08);
 }
 
 .quiz-info {
@@ -64,22 +186,119 @@
   min-width: 0;
 }
 
-.quiz-actions {
+.quiz-title {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.quiz-meta {
   display: flex;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.quiz-code {
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--primary);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+[data-theme="light"] .quiz-code {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.meta-dot {
+  opacity: 0.5;
+}
+
+.submission-count {
+  font-weight: 600;
+}
+
+.quiz-action {
   flex-shrink: 0;
 }
 
-@media (max-width: 600px) {
-  .quiz-card-header {
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--card0);
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+}
+
+[data-theme="light"] .empty-state {
+  background: linear-gradient(180deg, #faf8ff 0%, #ffffff 100%);
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  margin: 0 0 20px;
+  color: var(--muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .folder-header {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .quiz-actions {
-    margin-top: 12px;
+  .header-actions {
+    flex-wrap: wrap;
+  }
+  
+  .quiz-card-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  
+  .quiz-action {
+    width: 100%;
+  }
+  
+  .quiz-action .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .folder-icon {
+    font-size: 36px;
+  }
+  
+  .header-text h1 {
+    font-size: 1.6rem;
   }
 }
 </style>
-
 {% endblock %}

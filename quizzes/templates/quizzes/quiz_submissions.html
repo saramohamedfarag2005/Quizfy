@@ -1,232 +1,477 @@
 {% extends "base.html"%}
 {% load quiz_extras %}
 
-{% block title %}Submissions{% endblock %}
+{% block title %}Submissions - {{ quiz.title }}{% endblock %}
 
 {% block content %}
-<h1>Submissions</h1>
-<p><b>Quiz:</b> {{ quiz.title }} ({{ quiz.code }})</p>
-
-{% if not submissions %}
-  <p>No submissions yet.</p>
-{% endif %}
-
-{% for s in submissions %}
-  <div class="card submission-card">
-    <div class="sub-body">
-      <div class="sub-header">
-        <div>
-          <p class="student-name"><b>{{ s.student_name }}</b></p>
-          <p class="muted">Score: <b>{{ s.score }}/{{ s.total }}</b> • Submitted: {{ s.submitted_at|date:"M d, Y H:i" }}</p>
-        </div>
-        <a href="{% url 'grade_submission' quiz.id s.id %}" class="btn primary grade-btn">
-          📝 View & Grade
-        </a>
+<!-- Page Header -->
+<div class="submissions-header">
+  <div class="header-left">
+    <a href="{% url 'teacher_quiz_detail' quiz.id %}" class="back-link">← Back to Quiz</a>
+    <div class="header-content">
+      <div class="header-icon">📊</div>
+      <div class="header-text">
+        <h1>Submissions</h1>
+        <p class="header-meta">{{ quiz.title }} <span class="quiz-code">{{ quiz.code }}</span></p>
       </div>
     </div>
+  </div>
+  <div class="submission-stats">
+    <div class="stat-box">
+      <span class="stat-value">{{ submissions|length }}</span>
+      <span class="stat-label">Total</span>
+    </div>
+  </div>
+</div>
 
-    {% if s.student_user %}
-      {% with allowed=attempt_map|get_item:s.student_user.id|default:1 %}
-        <div class="sub-footer">
-          <div class="footer-left">
-            <span class="attempt-pill">
-              Attempts
-              <span class="attempt-count">{{ allowed }}</span>
-            </span>
-
-            <div class="stepper" aria-label="Attempts control">
-              <!-- decrease -->
-              <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="delta" value="-1">
-                <button
-                  type="submit"
-                  class="stepper-btn"
-                  aria-label="Decrease attempts"
-                  {% if allowed|add:0 <= 1 %}disabled{% endif %}
-                >
-                  –
-                </button>
-              </form>
-
-              <div class="stepper-value">{{ allowed }}</div>
-
-              <!-- increase -->
-              <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
-                {% csrf_token %}
-                <input type="hidden" name="delta" value="1">
-                <button
-                  type="submit"
-                  class="stepper-btn"
-                  aria-label="Increase attempts"
-                >
-                  +
-                </button>
-              </form>
+{% if not submissions %}
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h3>No Submissions Yet</h3>
+    <p>Students haven't submitted any answers yet. Share the quiz code to get started!</p>
+  </div>
+{% else %}
+  <div class="submissions-list">
+    {% for s in submissions %}
+      <div class="submission-card">
+        <div class="submission-main">
+          <div class="student-avatar">{{ s.student_name|slice:":1"|upper }}</div>
+          <div class="submission-info">
+            <h3 class="student-name">{{ s.student_name }}</h3>
+            <div class="submission-meta">
+              <span class="score-badge {% if s.total > 0 %}{% if s.score == s.total %}perfect{% elif s.score >= s.total|divisibleby:2 %}good{% endif %}{% endif %}">
+                {{ s.score }}/{{ s.total }}
+              </span>
+              <span class="meta-dot">•</span>
+              <span class="submission-time">{{ s.submitted_at|date:"M d, Y H:i" }}</span>
             </div>
           </div>
+          <a href="{% url 'grade_submission' quiz.id s.id %}" class="btn primary grade-btn">
+            📝 View & Grade
+          </a>
+        </div>
 
-          {% if quiz.folder %}
-            <a class="btn secondary export-btn"
-               href="{% url 'export_student_folder_excel' quiz.folder.id s.student_user.id %}">
-              Export Student Report
-            </a>
-          {% endif %}
-        </div>
-      {% endwith %}
-    {% else %}
-      <div class="sub-footer">
-        <div class="footer-left">
-          <span class="attempt-pill">
-            Attempts
-            <span class="attempt-count">1</span>
-          </span>
-        </div>
+        {% if s.student_user %}
+          {% with allowed=attempt_map|get_item:s.student_user.id|default:1 %}
+            <div class="submission-footer">
+              <div class="footer-left">
+                <div class="attempts-section">
+                  <span class="attempts-label">Attempts Allowed:</span>
+                  <div class="stepper">
+                    <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="delta" value="-1">
+                      <button type="submit" class="stepper-btn" {% if allowed|add:0 <= 1 %}disabled{% endif %}>−</button>
+                    </form>
+                    <div class="stepper-value">{{ allowed }}</div>
+                    <form method="post" action="{% url 'adjust_attempts' quiz.id s.student_user.id %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="delta" value="1">
+                      <button type="submit" class="stepper-btn">+</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              {% if quiz.folder %}
+                <a class="btn secondary export-btn" href="{% url 'export_student_folder_excel' quiz.folder.id s.student_user.id %}">
+                  📥 Export Report
+                </a>
+              {% endif %}
+            </div>
+          {% endwith %}
+        {% endif %}
       </div>
-    {% endif %}
+    {% endfor %}
   </div>
-{% endfor %}
+{% endif %}
 
 <style>
-  /* Card spacing polish */
-  .submission-card{
-    padding: 18px 18px 14px;
-  }
+/* Page Header */
+.submissions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
 
-  .sub-body{
-    padding: 4px 2px 14px;
-  }
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
-  .sub-header{
-    display: flex;
-    justify-content: space-between;
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background: rgba(139, 92, 246, 0.05);
+  width: fit-content;
+}
+
+.back-link:hover {
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  font-size: 48px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-code {
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--primary);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+[data-theme="light"] .quiz-code {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+/* Stats Box */
+.submission-stats {
+  display: flex;
+  gap: 12px;
+}
+
+.stat-box {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 14px;
+  padding: 16px 24px;
+  text-align: center;
+}
+
+[data-theme="light"] .stat-box {
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Submissions List */
+.submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.submission-card {
+  background: var(--card0);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .submission-card {
+  background: linear-gradient(180deg, #ffffff 0%, #faf8ff 100%);
+  border-color: rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.06);
+}
+
+.submission-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 10px 40px rgba(139, 92, 246, 0.12);
+}
+
+.submission-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.student-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.submission-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-name {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.submission-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.score-badge {
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--primary);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.score-badge.perfect {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.score-badge.good {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.meta-dot {
+  opacity: 0.4;
+}
+
+.grade-btn {
+  white-space: nowrap;
+}
+
+/* Footer */
+.submission-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(139, 92, 246, 0.03);
+  border-top: 1px solid var(--border);
+}
+
+[data-theme="light"] .submission-footer {
+  background: rgba(139, 92, 246, 0.04);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.attempts-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.attempts-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+[data-theme="light"] .stepper {
+  background: rgba(139, 92, 246, 0.04);
+}
+
+.stepper-btn {
+  width: 40px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper-value {
+  width: 44px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--primary);
+  background: rgba(139, 92, 246, 0.08);
+  border-left: 1px solid rgba(139, 92, 246, 0.15);
+  border-right: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="light"] .stepper-value {
+  color: #7c3aed;
+}
+
+.export-btn {
+  white-space: nowrap;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  background: var(--card0);
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+}
+
+[data-theme="light"] .empty-state {
+  background: linear-gradient(180deg, #faf8ff 0%, #ffffff 100%);
+}
+
+.empty-icon {
+  font-size: 56px;
+  margin-bottom: 16px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .submissions-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .submission-main {
+    flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    text-align: left;
   }
-
-  .grade-btn{
-    white-space: nowrap;
+  
+  .grade-btn {
+    width: 100%;
+    text-align: center;
   }
-
-  .student-name{
-    font-size: 18px;
-    margin: 0 0 8px;
-  }
-
-  .muted{
-    margin: 6px 0;
-    opacity: .85;
-  }
-
-  /* Footer bar */
-  .sub-footer{
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid rgba(255,255,255,.08);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+  
+  .submission-footer {
+    flex-direction: column;
+    align-items: stretch;
     gap: 14px;
   }
-
-  .footer-left{
-    display:flex;
-    align-items:center;
-    gap: 12px;
-    flex-wrap:wrap;
+  
+  .export-btn {
+    width: 100%;
+    text-align: center;
   }
+}
 
-  /* Attempts pill */
-  .attempt-pill{
-    display:inline-flex;
-    align-items:center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.05);
-    border: 1px solid rgba(255,255,255,.10);
-    font-size: 13px;
-    color: rgba(255,255,255,.88);
+@media (max-width: 600px) {
+  .header-icon {
+    font-size: 36px;
   }
-
-  .attempt-count{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-width: 30px;
-    height: 24px;
-    padding: 0 9px;
-    border-radius: 999px;
-    background: rgba(37,99,235,.18);
-    border: 1px solid rgba(37,99,235,.35);
-    color: rgba(255,255,255,.92);
-    font-weight: 800;
-    font-size: 13px;
+  
+  .header-text h1 {
+    font-size: 1.6rem;
   }
-
-  /* Stepper (professional, not random buttons) */
-  .stepper{
-    display:flex;
-    align-items:center;
-    border-radius: 14px;
-    overflow:hidden;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.05);
+  
+  .attempts-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-
-  .stepper-btn{
-    width: 42px;
-    height: 38px;
-    border: 0;
-    background: transparent;
-    color: rgba(255,255,255,.92);
-    font-weight: 900;
-    font-size: 18px;
-    cursor:pointer;
-    transition: background .12s ease, transform .06s ease;
-  }
-
-  .stepper-btn:hover{
-    background: rgba(255,255,255,.07);
-  }
-
-  .stepper-btn:active{
-    transform: scale(.98);
-  }
-
-  .stepper-btn:disabled{
-    opacity: .45;
-    cursor: not-allowed;
-  }
-
-  .stepper-value{
-    width: 46px;
-    height: 38px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight: 800;
-    color: rgba(255,255,255,.92);
-    border-left: 1px solid rgba(255,255,255,.10);
-    border-right: 1px solid rgba(255,255,255,.10);
-  }
-
-  /* Export button alignment */
-  .export-btn{
-    white-space: nowrap;
-  }
-
-  /* Mobile responsiveness */
-  @media (max-width: 640px){
-    .sub-footer{
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .export-btn{
-      width: 100%;
-      text-align: center;
-    }
-  }
+}
 </style>
-
 {% endblock %}
