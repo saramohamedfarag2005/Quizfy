@@ -1,102 +1,7 @@
-{% extends "base.html" %}
-{% block title %}My Subjects{% endblock %}
+#!/usr/bin/env python
+"""Script to update the Teacher Help Bot UI in teacher_folders.html"""
 
-{% block content %}
-<div class="row">
-  <div>
-    <h1>My Subjects</h1>
-  </div>
-  <div class="actions">
-    <a class="btn secondary" href="{% url 'change_password' %}">Change Password</a>
-    <a class="btn" href="{% url 'create_folder' %}">+ Create Subject Folder</a>
-  </div>
-</div>
-
-{% if not folders %}
-  <p>No subject folders yet.</p>
-{% endif %}
-
-{% for f in folders %}
-  <div class="card folder-card">
-    <div class="folder-header">
-      <div class="folder-info">
-        <h3 style="margin: 0;">{{ f.name }}</h3>
-        <p style="margin: 6px 0 0; color: var(--muted); font-size: 14px;">
-          {{ f.quizzes.count }} quiz{{ f.quizzes.count|pluralize:"zes" }}
-        </p>
-      </div>
-      <div class="folder-actions">
-        <a class="btn primary" href="{% url 'folder_detail' f.id %}">Open</a>
-        <a class="btn secondary" href="{% url 'export_folder_boxes_excel' f.id %}">📥 Export</a>
-        <a class="btn danger" href="{% url 'delete_folder' f.id %}" title="Delete Folder">🗑️</a>
-      </div>
-    </div>
-  </div>
-{% endfor %}
-
-<hr>
-
-<h2>Ungrouped Quizzes</h2>
-
-{% if not ungrouped %}
-  <p>All quizzes are grouped ✅</p>
-{% endif %}
-
-{% for q in ungrouped %}
-  <div class="card quiz-card">
-    <div class="quiz-card-header">
-      <div class="quiz-info">
-        <h3 style="margin: 0;">{{ q.title }}</h3>
-        <p style="margin: 6px 0 0; color: var(--muted); font-size: 14px;">
-          Code: <b>{{ q.code }}</b> · {{ q.submitted_count }}/{{ q.assigned_count }} submitted
-        </p>
-      </div>
-      <div class="quiz-actions">
-        <a class="btn primary" href="{% url 'teacher_quiz_detail' q.id %}">Open</a>
-        <a class="btn secondary" href="{% url 'move_quiz' q.id %}">Move</a>
-        <a class="btn danger" href="{% url 'delete_quiz' q.id %}">🗑️</a>
-      </div>
-    </div>
-  </div>
-{% endfor %}
-
-<style>
-.folder-card, .quiz-card {
-  margin-bottom: 12px;
-}
-
-.folder-header, .quiz-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.folder-info, .quiz-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.folder-actions, .quiz-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-@media (max-width: 600px) {
-  .folder-header, .quiz-card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .folder-actions, .quiz-actions {
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-}
-</style>
-
-<!-- ✅ Smart Teacher Help Bot Widget -->
+NEW_HELPBOT_UI = '''<!-- ✅ Smart Teacher Help Bot Widget -->
 <div id="helpbot" class="helpbot">
   <div class="helpbot-header">
     <div class="helpbot-header-left">
@@ -455,9 +360,9 @@
     // Format markdown-like text
     function formatResponse(text) {
       return text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\\*\\*(.+?)\\*\\*/g, '<strong>$1</strong>')
+        .replace(/\\\\n/g, '<br>')
         .replace(/\\n/g, '<br>')
-        .replace(/\n/g, '<br>')
         .replace(/• /g, '&bull; ');
     }
 
@@ -554,3 +459,29 @@
 </script>
 
 {% endblock %}
+'''
+
+# Read the file
+with open('quizzes/templates/quizzes/teacher_folders.html', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Find start and end of the section
+start_marker = '<!-- ✅ Teacher Help Bot Widget'
+end_marker = '{% endblock %}'
+
+start = content.find(start_marker)
+end = content.find(end_marker)
+
+if start == -1:
+    print("ERROR: Could not find start marker")
+elif end == -1:
+    print("ERROR: Could not find end marker")
+else:
+    # Replace the section
+    new_content = content[:start] + NEW_HELPBOT_UI
+    
+    with open('quizzes/templates/quizzes/teacher_folders.html', 'w', encoding='utf-8') as f:
+        f.write(new_content)
+    
+    print("SUCCESS: Updated teacher help bot UI!")
+    print(f"Replaced from position {start} to {end}")
