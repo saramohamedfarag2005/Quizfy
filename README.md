@@ -147,24 +147,6 @@ Quizfy was built with a strong focus on:
 
 ---
 
- ⚠️ Important Notes
-
-* Virtual environments (`.venv`, `vv`) are excluded from version control
-* Environment variables are never committed
-* Utility scripts are organized under `scripts/` for clarity
-* The project prioritizes **clarity and functionality** over unnecessary complexity
-
----
-
- 📌 Future Improvements (Optional)
-
-* Advanced analytics dashboards
-* More granular performance categories
-* Role-based permissions
-* API layer for external integrations
-
----
-
  👤 Author
 
 **Sara Al-Desouky**
